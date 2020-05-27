@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+    core:
+        build:
+            context: ./src/core
+            dockerfile: ./Dockerfile
+        environment:
+            - DISCORD_TOKEN=${DISCORD_TOKEN}
+            - DEBUG=true
+        ports:
+            - 3000:3000
+            - 5050:5050

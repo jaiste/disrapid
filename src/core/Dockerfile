@@ -7,6 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED 1
 
+EXPOSE 3000 5050
+
 # Install pip requirements
 ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
