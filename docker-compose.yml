@@ -1,12 +1,32 @@
 version: '3.4'
 
 services:
+
     core:
+        depends_on: 
+            - database
         build:
             context: ./src/core
             dockerfile: ./Dockerfile
         environment:
             - DISCORD_TOKEN=${DISCORD_TOKEN}
-        ports:
-            - 3000:3000
-            - 5050:5050
+            - DB_HOST=database
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - DEBUG=true
+        links:
+            - database
+
+    database:
+        image: mysql:5.7
+        environment:
+            - MYSQL_ROOT_PASSWORD=${DB_ROOT}
+            - MYSQL_DATABASE=${DB_NAME}
+            - MYSQL_USER=${DB_USER}
+            - MYSQL_PASSWORD=${DB_PASS}
+        volumes:
+            - db_vol:/var/lib/mysql
+
+volumes:
+    db_vol:

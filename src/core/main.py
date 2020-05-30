@@ -6,6 +6,7 @@
 import os
 import sys
 import ptvsd
+import interface
 
 try:
     # check if we should run disrapid in debug mode
@@ -25,9 +26,10 @@ except Exception as e:
 # import all functional libaries
 import logging
 import discord
+import asyncio
+from discord.ext import commands, tasks
 
 try:
-
     # if no discord token was provided we can't run the bot
     if 'DISCORD_TOKEN' not in os.environ:
         raise Exception("no token provided, exiting...")
@@ -39,10 +41,37 @@ except Exception as e:
     logging.fatal(e)
     sys.exit(1)
 
-# start and run our discord client
-client = discord.Client()
-client.run(DISCORD_TOKEN)
 
-# this happens when the bot was stopped by any systemcall, make a clean shutdown...
-logging.warning("clean shutdown invoked")
-client.close()
+# TMP bot class
+class Disrapid(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # init database
+        self.db = interface.InterfaceHandler(host=os.environ["DB_HOST"], name=os.environ["DB_NAME"], user=os.environ["DB_USER"], dbpass=os.environ["DB_PASS"])
+        
+
+    def load_extension(self, extension):
+        # logging override
+        super().load_extension(extension)
+
+    async def logout(self):
+        # override logout sequence, exit db connection first
+        # await self.db.close()
+        await super().logout()
+
+
+if __name__ == "__main__":
+
+    # start and run our discord client
+    client = Disrapid(command_prefix=".")
+
+    # load extensions 
+    # ...
+    client.load_extension("cogs.welcome")
+    client.load_extension("cogs.testcmd")
+
+    client.run(DISCORD_TOKEN)
+
+    # this happens when the bot was stopped by any systemcall, make a clean shutdown...
+    logging.warning("clean shutdown invoked")
+    client.logout()
