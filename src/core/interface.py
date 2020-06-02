@@ -24,9 +24,9 @@ class InterfaceHandler:
         
     def gettestmessage(self, guild_id):
         try:
-            query = f"SELECT * FROM testmessages WHERE id={guild_id};"
+            query = """SELECT * FROM testmessages WHERE id=%(guild_id)s;"""
 
-            self._cursor.execute(query)
+            self._cursor.execute(query, {"guild_id":guild_id})
             result = self._cursor.fetchone()
 
             if not result:
