@@ -46,7 +46,7 @@ except Exception as e:
 
 # TMP bot class
 class Disrapid(commands.Bot):
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # init database
@@ -60,14 +60,6 @@ class Disrapid(commands.Bot):
         # override logout sequence, exit db connection first
         # await self.db.close()
         await super().logout()
-
-    class Welcomemessage(Base):
-        __tablename__ = 'guilds_welcomemessage'
-
-        guild_id = Column(Integer, primary_key=True)
-        text = Column(String)
-        enable = Column(Integer)
-        channel_id = Column(Integer)
 
 if __name__ == "__main__":
 

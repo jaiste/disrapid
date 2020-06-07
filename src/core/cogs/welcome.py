@@ -2,7 +2,6 @@ import discord
 import logging
 from discord.ext import commands
 
-
 # TMP test cog class
 class Welcome(commands.Cog, name="Welcome Message Extension"):
     def __init__(self, bot):
@@ -30,14 +29,20 @@ class Welcome(commands.Cog, name="Welcome Message Extension"):
 
         # get welcomemessage for current server
         try:
-            welcomemessage = self.bot.session.query(self.bot.Welcomemessage).filter(self.bot.Welcomemessage.guild_id == member.guild.id, self.bot.Welcomemessage.enable == 1).one()
+            # init new session
+            session = self.bot.db.Session()
 
+            welcomemessage = session.query(schema.Welcomemessage).filter(schema.Welcomemessage.guild_id == member.guild.id, schema.Welcomemessage.enable == 1).one()
+            
+            
+            #welcomemessage = self.bot.session.query(self.bot.Welcomemessage).filter(self.bot.Welcomemessage.guild_id == member.guild.id, self.bot.Welcomemessage.enable == 1).one()
+            
             # check if channel_id is set -> send this message to a channel
             # if not -> send this to a user via DM
-            if welcomemessage.channel_id != None:
-                await self.bot.channel(welcomemessage.channel_id).send(welcomemessage.text)
-            else:
-                await member.send(welcomemessage.text)
+            # if welcomemessage.channel_id != None:
+            #     await self.bot.channel(welcomemessage.channel_id).send(welcomemessage.text)
+            # else:
+            #     await member.send(welcomemessage.text)
 
         except Exception as e:
             logging.warning(e)
