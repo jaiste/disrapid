@@ -6,7 +6,6 @@
 import os
 import sys
 import ptvsd
-import interface
 
 # import all sqlalchemy libs
 from sqlalchemy import create_engine, Column, String, Integer, Date, Table, ForeignKey

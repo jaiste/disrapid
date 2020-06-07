@@ -20,5 +20,8 @@ ADD . /app
 RUN useradd appuser && chown -R appuser /app
 USER appuser
 
+# Check if db is empty
+
+
 # During debugging, this entry point will be overridden.
 CMD ["python", "main.py"]
