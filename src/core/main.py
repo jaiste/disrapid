@@ -8,6 +8,13 @@ import sys
 import ptvsd
 import interface
 
+# import all sqlalchemy libs
+from sqlalchemy import create_engine, Column, String, Integer, Date, Table, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+import schema
+
 try:
     # check if we should run disrapid in debug mode
     if 'DEBUG' in os.environ:
@@ -44,11 +51,17 @@ except Exception as e:
 
 # TMP bot class
 class Disrapid(commands.Bot):
+    
+    Base = declarative_base()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # init database
-        self.db = interface.InterfaceHandler(host=os.environ["DB_HOST"], name=os.environ["DB_NAME"], user=os.environ["DB_USER"], dbpass=os.environ["DB_PASS"])
-        
+
+        engine = create_engine(f'mysql+pymysql://{os.environ["DB_USER"]}:{os.environ["DB_PASS"]}@{os.environ["DB_HOST"]}:3306/{os.environ["DB_NAME"]}')
+        Session = sessionmaker(bind=engine)
+
+        self.session = Session()
 
     def load_extension(self, extension):
         # logging override
@@ -59,6 +72,13 @@ class Disrapid(commands.Bot):
         # await self.db.close()
         await super().logout()
 
+    class Welcomemessage(Base):
+        __tablename__ = 'guilds_welcomemessage'
+
+        guild_id = Column(Integer, primary_key=True)
+        text = Column(String)
+        enable = Column(Integer)
+        channel_id = Column(Integer)
 
 if __name__ == "__main__":
 
