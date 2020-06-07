@@ -4,6 +4,17 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+class DisrapidDb:
+
+    def __init__(self):
+        
+        self.engine = create_engine(f'mysql+pymysql://{os.environ["DB_USER"]}:{os.environ["DB_PASS"]}@{os.environ["DB_HOST"]}:3306/{os.environ["DB_NAME"]}')
+
+        self.Session = sessionmaker(bind=engine)
+
+        Base.metadata.create_all(self.engine)
+
+
 class Welcomemessage(Base):
     __tablename__ = 'guilds_welcomemessage'
 

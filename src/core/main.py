@@ -7,11 +7,7 @@ import os
 import sys
 import ptvsd
 
-# import all sqlalchemy libs
-from sqlalchemy import create_engine, Column, String, Integer, Date, Table, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
+# import db handler
 import schema
 
 try:
@@ -51,16 +47,10 @@ except Exception as e:
 # TMP bot class
 class Disrapid(commands.Bot):
     
-    Base = declarative_base()
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # init database
-
-        engine = create_engine(f'mysql+pymysql://{os.environ["DB_USER"]}:{os.environ["DB_PASS"]}@{os.environ["DB_HOST"]}:3306/{os.environ["DB_NAME"]}')
-        Session = sessionmaker(bind=engine)
-
-        self.session = Session()
+        self.db = schema.DisrapidDb()
 
     def load_extension(self, extension):
         # logging override
