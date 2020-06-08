@@ -1,5 +1,4 @@
 discord.py==1.3.3
 ptvsd==4.3.2
-mysql-connector==2.2.9
 SQLAlchemy==1.3.17
 PyMySQL==0.9.3

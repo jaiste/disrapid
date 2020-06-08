@@ -7,29 +7,24 @@ import os
 import sys
 import ptvsd
 
-# import db handler
-import schema
-
 try:
     # check if we should run disrapid in debug mode
     if 'DEBUG' in os.environ:
         # listen for incoming debugger connection
-        ptvsd.enable_attach(address=('0.0.0.0',5050))
-        # in debug mode we need to wait for debugger to connect before we continue..
+        ptvsd.enable_attach(address=('0.0.0.0', 5050))
+        # in debug mode we need to wait for debugger to connect
         ptvsd.wait_for_attach()
     else:
         # debug mode is not enabled, running in production mode...
         pass
 
-except Exception as e:
+except Exception:
     # any error will stop the container
     sys.exit(1)
 
 # import all functional libaries
 import logging
-import discord
-import asyncio
-from discord.ext import commands, tasks
+from bot import Disrapid, DisrapidConfig
 
 try:
     # if no discord token was provided we can't run the bot
@@ -43,36 +38,21 @@ except Exception as e:
     logging.fatal(e)
     sys.exit(1)
 
-
-# TMP bot class
-class Disrapid(commands.Bot):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # init database
-        self.db = schema.DisrapidDb()
-
-    def load_extension(self, extension):
-        # logging override
-        super().load_extension(extension)
-
-    async def logout(self):
-        # override logout sequence, exit db connection first
-        # await self.db.close()
-        await super().logout()
-
 if __name__ == "__main__":
 
     # start and run our discord client
-    client = Disrapid(command_prefix=".")
+    config = DisrapidConfig(db_host=os.environ["DB_HOST"],
+                            db_user=os.environ["DB_USER"],
+                            db_name=os.environ["DB_NAME"],
+                            db_pass=os.environ["DB_PASS"])
+    client = Disrapid(command_prefix=".", config=config)
 
-    # load extensions 
-    # ...
+    # load extensions
     client.load_extension("cogs.welcome")
-    client.load_extension("cogs.testcmd")
 
     client.run(DISCORD_TOKEN)
 
-    # this happens when the bot was stopped by any systemcall, make a clean shutdown...
+    # this happens when the bot was stopped by any systemcall, make a clean
+    # shutdown...
     logging.warning("clean shutdown invoked")
     client.logout()

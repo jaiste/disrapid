@@ -14,7 +14,8 @@ RUN python -m pip install -r requirements.txt
 RUN apt-get update && apt-get install -y mariadb-client && rm -rf /var/lib/apt
 
 WORKDIR /app
-ADD . /app
+ADD disrapidBot /app
+ADD requirements.txt /app
 
 # Switching to a non-root user
 RUN useradd appuser && chown -R appuser /app

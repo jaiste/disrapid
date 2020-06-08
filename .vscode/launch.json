@@ -12,16 +12,29 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Attach",
+            "name": "Attach core",
             "type": "python",
             "request": "attach",
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/src/core",
+                    "localRoot": "${workspaceFolder}/src/core/disrapidBot",
                     "remoteRoot": "/app",
                 }
             ],
             "port": 5050,
+            "host": "localhost"
+        },
+        {
+            "name": "Attach web",
+            "type": "python",
+            "request": "attach",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src/web/disrapidWeb",
+                    "remoteRoot": "/app",
+                }
+            ],
+            "port": 5051,
             "host": "localhost"
         },
     ]
