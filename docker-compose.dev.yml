@@ -21,14 +21,17 @@ services:
             - 5050:5050
 
     database:
-        image: mariadb
+        image: mariadb:latest
         environment:
             - MYSQL_ROOT_PASSWORD=${DB_ROOT}
             - MYSQL_DATABASE=${DB_NAME}
             - MYSQL_USER=${DB_USER}
             - MYSQL_PASSWORD=${DB_PASS}
+        ports:
+            - 33066:3306
         volumes:
             - db_vol:/var/lib/mysql
+            - ./config/database/10-dev.cnf:/etc/mysql/conf.d/10-dev.cnf
         
 volumes:
     db_vol:
