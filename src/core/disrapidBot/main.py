@@ -44,7 +44,8 @@ if __name__ == "__main__":
     config = DisrapidConfig(db_host=os.environ["DB_HOST"],
                             db_user=os.environ["DB_USER"],
                             db_name=os.environ["DB_NAME"],
-                            db_pass=os.environ["DB_PASS"])
+                            db_pass=os.environ["DB_PASS"],
+                            schema_version=1)
     client = Disrapid(command_prefix=".", config=config)
 
     # load extensions

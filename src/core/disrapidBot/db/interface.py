@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import logging
 import sys
-from . import Base, guild
+from . import Base, guild, migrate
 
 
 class DisrapidDb:
@@ -31,6 +31,14 @@ class DisrapidDb:
                                         guild_id, guild.Welcomemessage.enable
                                         == 1) \
                                 .one()
+        except Exception as e:
+            logging.warning(e)
+            return None
+
+    def get_schema_version(self, session):
+        # this will get the current database schema version
+        try:
+            return session.query(migrate.Schema).one()
         except Exception as e:
             logging.warning(e)
             return None
