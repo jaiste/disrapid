@@ -39,7 +39,7 @@ class Welcome(commands.Cog, name="Welcome Message Extension"):
             session.close()
 
         except Exception as e:
-            logging.warning(e)
+            logging.debug(e)
 
 
 def setup(bot):

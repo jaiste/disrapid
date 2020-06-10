@@ -32,7 +32,7 @@ class DisrapidDb:
                                         == 1) \
                                 .one()
         except Exception as e:
-            logging.warning(e)
+            logging.debug(e)
             return None
 
     def get_schema_version(self, session):

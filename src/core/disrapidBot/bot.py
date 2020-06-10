@@ -38,10 +38,12 @@ class Disrapid(commands.Bot):
             # check if db is healthy
             pass
 
+            session.close()
             return True
 
         except Exception as e:
             logging.fatal(f"couldn't perform santiy check reason: {e}")
+            session.close()
             return False
 
     def load_extension(self, extension):
