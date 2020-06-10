@@ -2,7 +2,6 @@
 # ---
 #
 # Jira-Prefix: DIS
-# TEST2
 
 # import necessary libraries for debugging at the earliest possible point
 import os
