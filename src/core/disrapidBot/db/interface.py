@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exists
 from sqlalchemy.orm import sessionmaker
 import logging
 import sys
@@ -42,3 +42,15 @@ class DisrapidDb:
         except Exception as e:
             logging.warning(e)
             return None
+
+    def sync_guild(self, session, guild_id):
+        # this function will synchronize a guild with the database
+        #
+        if session.query(guild.Guild) \
+                  .filter(exists().where(guild.Guild.id == guild_id)):
+            # check / update the guild name
+            pass
+        else:
+            new_guild = guild.Guild(id=guild_id)
+            session.add(new_guild)
+        pass

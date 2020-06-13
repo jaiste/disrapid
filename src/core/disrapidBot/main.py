@@ -40,6 +40,8 @@ except Exception as e:
 
 if __name__ == "__main__":
 
+    logging.Logger.setLevel = logging.INFO
+    
     # start and run our discord client
     config = DisrapidConfig(db_host=os.environ["DB_HOST"],
                             db_user=os.environ["DB_USER"],
@@ -50,6 +52,7 @@ if __name__ == "__main__":
 
     # load extensions
     client.load_extension("cogs.welcome")
+    client.load_extension("cogs.sync")
 
     client.run(DISCORD_TOKEN)
 

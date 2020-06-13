@@ -9,7 +9,9 @@ class Guild(Base):
     id = Column(Integer, primary_key=True)
     welcomemessage = relationship("Welcomemessage",
                                   uselist=False,
-                                  back_populates="guilds")
+                                  back_populates="guild")
+    channels = relationship("Channel",
+                            back_populates="guild")
 
 
 class Welcomemessage(Base):
@@ -20,4 +22,14 @@ class Welcomemessage(Base):
     text = Column(String)
     enable = Column(Integer)
     channel_id = Column(Integer)
-    guilds = relationship("Guild", back_populates="welcomemessage")
+    guild = relationship("Guild", back_populates="welcomemessage")
+
+
+class Channel(Base):
+    __tablename__ = 'guilds_channels'
+
+    id = Column(Integer, primary_key=True)
+    guild_id = Column(Integer, ForeignKey('guilds.id'))
+    name = Column(String)
+    channeltype = Column(String)
+    guild = relationship("Guild", back_populates="channels")
