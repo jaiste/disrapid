@@ -1,8 +1,6 @@
 # disrapid
 # ---
 #
-# Jira-Prefix: DIS
-# Test
 
 # import necessary libraries for debugging at the earliest possible point
 import os
