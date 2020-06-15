@@ -21,11 +21,14 @@ class Guild(Base):
     name = Column(String)
     welcomemessage = relationship("Welcomemessage",
                                   uselist=False,
-                                  back_populates="guild")
+                                  back_populates="guild",
+                                  cascade="all, delete, delete-orphan")
     channels = relationship("Channel",
-                            back_populates="guild")
+                            back_populates="guild",
+                            cascade="all, delete, delete-orphan")
     roles = relationship("Role",
-                         back_populates="guild")
+                         back_populates="guild",
+                         cascade="all, delete, delete-orphan")
 
 
 class Welcomemessage(Base):
@@ -35,8 +38,9 @@ class Welcomemessage(Base):
     guild_id = Column(Integer, ForeignKey('guilds.id'))
     text = Column(String)
     enable = Column(Integer)
-    channel_id = Column(Integer)
+    channel_id = Column(Integer, ForeignKey('guilds_channels.id'))
     guild = relationship("Guild", back_populates="welcomemessage")
+    channel = relationship("Channel", back_populates="welcomemessage")
 
 
 class Channel(Base):
@@ -47,6 +51,9 @@ class Channel(Base):
     name = Column(String)
     channeltype = Column(Enum(ChannelTypes))
     guild = relationship("Guild", back_populates="channels")
+    welcomemessage = relationship("Channel",
+                                  back_populates="channel"
+                                  )
 
 
 class Role(Base):
