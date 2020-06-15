@@ -1,6 +1,7 @@
 import discord
 import logging
 from discord.ext import commands
+from db.guild import Guild
 
 
 class Welcome(commands.Cog, name="Welcome Message Extension"):
@@ -22,8 +23,8 @@ class Welcome(commands.Cog, name="Welcome Message Extension"):
             # init new session
             session = self.bot.db.Session()
 
-            message = self.bot.db.get_active_welcomemessage(session,
-                                                            member.guild.id)
+            guild = session.query(Guild).get(member.guild.id)
+            message = guild.welcomemessage
 
             if message is None:
                 raise Exception("no active welcomemessage for this server")

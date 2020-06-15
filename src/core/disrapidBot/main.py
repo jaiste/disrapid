@@ -6,6 +6,7 @@
 import os
 import sys
 import ptvsd
+import logging
 
 try:
     # check if we should run disrapid in debug mode
@@ -14,6 +15,7 @@ try:
         ptvsd.enable_attach(address=('0.0.0.0', 5050))
         # in debug mode we need to wait for debugger to connect
         ptvsd.wait_for_attach()
+        logging.basicConfig(level=logging.DEBUG)
     else:
         # debug mode is not enabled, running in production mode...
         pass
@@ -23,7 +25,6 @@ except Exception:
     sys.exit(1)
 
 # import all functional libaries
-import logging
 from bot import Disrapid, DisrapidConfig
 
 try:
@@ -40,16 +41,23 @@ except Exception as e:
 
 if __name__ == "__main__":
 
+    logging.Logger.setLevel = logging.INFO
+
     # start and run our discord client
     config = DisrapidConfig(db_host=os.environ["DB_HOST"],
                             db_user=os.environ["DB_USER"],
                             db_name=os.environ["DB_NAME"],
                             db_pass=os.environ["DB_PASS"],
                             schema_version=1)
+
+    if 'DO_FULL_SYNC' in os.environ:
+        config.do_full_sync = True
+
     client = Disrapid(command_prefix=".", config=config)
 
     # load extensions
     client.load_extension("cogs.welcome")
+    client.load_extension("cogs.sync")
 
     client.run(DISCORD_TOKEN)
 

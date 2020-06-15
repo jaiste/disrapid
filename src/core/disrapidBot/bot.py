@@ -3,6 +3,8 @@ import sys
 import logging
 from db.interface import DisrapidDb
 
+ADMINISTRATOR = 0x00000008
+
 
 class Disrapid(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -63,3 +65,4 @@ class DisrapidConfig:
         self.db_pass = kwargs.pop("db_pass")
         self.db_user = kwargs.pop("db_user")
         self.schema_version = kwargs.pop("schema_version")
+        self.do_full_sync = False
