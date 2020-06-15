@@ -11,7 +11,7 @@ ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 WORKDIR /app
-ADD disrapidBot /app
+ADD disrapidAdmin /app
 ADD requirements.txt /app
 
 # Switching to a non-root user

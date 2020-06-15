@@ -20,7 +20,7 @@ services:
         ports:
             - 5050:5050
 
-    xbot_webadmin:
+    web:
         depends_on: 
             - database
         build:
@@ -35,10 +35,12 @@ services:
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
             - SECRET_KEY=${DB_PASS}
+            - DEBUG=true
         links:
             - database:database
         ports:
             - 5000:5000
+            - 5051:5051
 
     database:
         image: mariadb:latest

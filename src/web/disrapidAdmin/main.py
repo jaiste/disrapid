@@ -19,6 +19,25 @@ from requests_oauthlib import OAuth2Session
 from db.interface import DisrapidDb
 from db.guild import Guild, Role, Channel, Welcomemessage
 
+import ptvsd
+
+try:
+    # check if we should run disrapid in debug mode
+    if 'DEBUG' in os.environ:
+        # listen for incoming debugger connection
+        ptvsd.enable_attach(address=('0.0.0.0', 5051))
+        # in debug mode we need to wait for debugger to connect
+        ptvsd.wait_for_attach()
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        # debug mode is not enabled, running in production mode...
+        pass
+
+except Exception:
+    # any error will stop the container
+    sys.exit(1)
+
+
 app = Flask(__name__)
 
 try:
@@ -30,10 +49,11 @@ try:
 
     if 'http://' in OAUTH2_REDIRECT_URI:
         os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
-
     API_BASE_URL = 'https://discordapp.com/api'
     AUTHORIZATION_BASE_URL = API_BASE_URL + '/oauth2/authorize'
     TOKEN_URL = API_BASE_URL + '/oauth2/token'
+
+    LOGOUT_REDIRECT_URL = os.environ["LOGOUT_REDIRECT_URL"]
 
     db = DisrapidDb(host=os.environ["DB_HOST"],
                     user=os.environ["DB_USER"],
@@ -45,49 +65,53 @@ except Exception as e:
     sys.exit(1)
 
 
-# def make_session(token=None, state=None, scope=None):
-#     return OAuth2Session(
-#         client_id=OAUTH2_CLIENT_ID,
-#         token=token,
-#         state=state,
-#         scope=scope,
-#         redirect_uri=OAUTH2_REDIRECT_URI,
-#         auto_refresh_kwargs={
-#             'client_id': OAUTH2_CLIENT_ID,
-#             'client_secret': OAUTH2_CLIENT_SECRET,
-#         },
-#         auto_refresh_url=TOKEN_URL,
-#         token_updater=token_updater)
-# 
-# def is_logged_in(f):
-#     # this represents the decorator to check whether a user has a valid discord oauth token
-#     # ---
-#     #
-#     @wraps(f)
-#     def wrap(*args, **kwargs):
-#         if 'oauth2_token' in session:
-#             # ADD IMPLEMENTATION:
-#             # check if token is still valid!!
-#             #
-#             # TMP
-#             return f(*args, **kwargs)
-#         else:
-#             # flash('Unauthorized, please login', 'danger')
-#             return redirect(url_for('view_login'))
-#     return wrap
-# 
-# def is_server_selected(f):
-#     # This is the decorator to check whether the user has selected a server
-#     # ---
-#     #
-#     @wraps(f)
-#     def wrap(*args, **kwargs):
-#         if 'server_id' in session:
-#             return f(*args, **kwargs)
-#         else:
-#             flash('Select your server first!', 'info')
-#             return redirect(url_for('view_select_server'))
-#     return wrap
+def make_session(token=None, state=None, scope=None):
+    return OAuth2Session(
+        client_id=OAUTH2_CLIENT_ID,
+        token=token,
+        state=state,
+        scope=scope,
+        redirect_uri=OAUTH2_REDIRECT_URI,
+        auto_refresh_kwargs={
+            'client_id': OAUTH2_CLIENT_ID,
+            'client_secret': OAUTH2_CLIENT_SECRET,
+        },
+        auto_refresh_url=TOKEN_URL,
+        token_updater=token_updater
+        )
+
+
+def is_logged_in(f):
+    # this represents the decorator to check whether a user has a valid
+    # discord oauth token
+    # ---
+    #
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'oauth2_token' in session:
+            # ADD IMPLEMENTATION:
+            # check if token is still valid!!
+            #
+            # TMP
+            return f(*args, **kwargs)
+        else:
+            # flash('Unauthorized, please login', 'danger')
+            return redirect(url_for('view_login'))
+    return wrap
+
+
+def is_server_selected(f):
+    # This is the decorator to check whether the user has selected a server
+    # ---
+    #
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'server_id' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Select your server first!', 'info')
+            return redirect(url_for('view_select_server'))
+    return wrap
 
 
 @app.route('/assets/<path:path>')
@@ -98,62 +122,72 @@ def view_assets(path):
     return send_from_directory('assets', path)
 
 
-# @app.route('/login')
-# def view_login():
-#     # This represents the login function
-#     # ---
-#     #
-#     # Login function will create an oauth session and redirect to discord authorization url
-#     # Discord client should send the user back to our callback url
-#     #
-#     try:
-#         scope = request.args.get(
-#             'scope',
-#             'identify email connections guilds guilds.join')
-#         discord = make_session(scope=scope.split(' '))
-#         authorization_url, state = discord.authorization_url(AUTHORIZATION_BASE_URL)
-#         session['oauth2_state'] = state
-#         return redirect(authorization_url)
-#     except Exception as e:
-#         logging.error(e)
-# 
-# @app.route('/logout')
-# def logout(): 
-#     # Log the user out and redirect to login-page
-#     # ---
-#     #
-#     session.clear()
-#     flash('You are now logged out', 'success')
-#     return redirect(url_for('view_login'))
+@app.route('/login')
+def view_login():
+    # This represents the login function
+    # ---
+    #
+    # Login function will create an oauth session and redirect to discord
+    # authorization url
+    # Discord client should send the user back to our callback url
+    #
+    try:
+        scope = request.args.get(
+            'scope',
+            'identify email connections guilds guilds.join')
+        discord = make_session(scope=scope.split(' '))
+        authorization_url, state = \
+            discord.authorization_url(AUTHORIZATION_BASE_URL)
+        session['oauth2_state'] = state
+        return redirect(authorization_url)
+    except Exception as e:
+        logging.error(e)
 
-# @app.route('/callback')
-# def callback():
-#     # This represents the callback function
-#     # ---
-#     #
-#     # when user is logged in via discord oauth we receive the callback function
-#     # once the user is logged in the token is valid and we can login the user
-#     # 
-#     try:
-#         if request.values.get('error'):
-#             return request.values['error']
-#         discord = make_session(state=session.get('oauth2_state'))
-#         token = discord.fetch_token(
-#             TOKEN_URL,
-#             client_secret=OAUTH2_CLIENT_SECRET,
-#             authorization_response=request.url.replace('http', 'https'))
-#         session['oauth2_token'] = token
-#         session['logged_in'] = True
-#         logging.debug(f'user logged in with token: {token}')
-#         
-#         # get user data
-#         discord = make_session(token=session.get('oauth2_token'))
-#         session['guild_data'] = discord.get(API_BASE_URL + '/users/@me/guilds').json()
-#         session['user_data'] = discord.get(API_BASE_URL + '/users/@me').json()
-#         logging.debug(session['user_data'])
-#         return redirect(url_for('view_select_server'))
-#     except Exception as e:
-#         logging.error(e)
+
+@app.route('/logout')
+def logout(): 
+    # Log the user out and redirect to login-page
+    # ---
+    #
+    session.clear()
+    flash('You are now logged out', 'success')
+    return redirect(url_for('view_login'))
+
+
+@app.route('/callback')
+def callback():
+    # This represents the callback function
+    # ---
+    #
+    # when user is logged in via discord oauth we receive the callback function
+    # once the user is logged in the token is valid and we can login the user
+    #
+    try:
+        if request.values.get('error'):
+            return request.values['error']
+        discord = make_session(state=session.get('oauth2_state'))
+        token = discord.fetch_token(
+            TOKEN_URL,
+            client_secret=OAUTH2_CLIENT_SECRET,
+            authorization_response=request.url.replace('http', 'https'))
+        session['oauth2_token'] = token
+        session['logged_in'] = True
+        logging.debug(f'user logged in with token: {token}')
+
+        # get user data
+        discord = make_session(token=session.get('oauth2_token'))
+
+        session['guild_data'] = discord \
+            .get(API_BASE_URL + '/users/@me/guilds') \
+            .json()
+
+        session['user_data'] = discord.get(API_BASE_URL + '/users/@me') \
+            .json()
+
+        logging.debug(session['user_data'])
+        return redirect(url_for('view_select_server'))
+    except Exception as e:
+        logging.error(e)
 
 # @app.route('/select_server')
 # @is_logged_in
@@ -238,7 +272,7 @@ def view_assets(path):
 
 @app.route('/')
 def view_dashboard():
-    pass
+    return render_template('dashboard.html')
 
 
 if __name__ == "__main__":
