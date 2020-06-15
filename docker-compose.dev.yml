@@ -20,6 +20,26 @@ services:
         ports:
             - 5050:5050
 
+    xbot_webadmin:
+        depends_on: 
+            - database
+        build:
+            context: ./src/web
+            dockerfile: ./Dockerfile
+        environment:
+            - DISCORD_OAUTH2_CLIENT_ID=${DISCORD_OAUTH2_CLIENT_ID}
+            - DISCORD_OAUTH2_CLIENT_SECRET=${DISCORD_OAUTH2_CLIENT_SECRET}
+            - DISCORD_OAUTH2_REDIRECT_URI=${DISCORD_OAUTH2_REDIRECT_URI}
+            - DB_HOST=database
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - SECRET_KEY=${DB_PASS}
+        links:
+            - database:database
+        ports:
+            - 5000:5000
+
     database:
         image: mariadb:latest
         environment:
