@@ -41,23 +41,27 @@ except Exception as e:
 
 if __name__ == "__main__":
 
-    logging.Logger.setLevel = logging.INFO
-
     # start and run our discord client
     config = DisrapidConfig(db_host=os.environ["DB_HOST"],
                             db_user=os.environ["DB_USER"],
                             db_name=os.environ["DB_NAME"],
                             db_pass=os.environ["DB_PASS"],
-                            schema_version=1)
+                            schema_version=1,
+                            youtube=False)
 
     if 'DO_FULL_SYNC' in os.environ:
         config.do_full_sync = True
+
+    if 'YOUTUBE_DEVELOPER_KEY' in os.environ:
+        config.developer_key = os.environ["YOUTUBE_DEVELOPER_KEY"]
+        config.youtube = True
 
     client = Disrapid(command_prefix=".", config=config)
 
     # load extensions
     client.load_extension("cogs.welcome")
     client.load_extension("cogs.sync")
+    client.load_extension("cogs.notification")
 
     client.run(DISCORD_TOKEN)
 
