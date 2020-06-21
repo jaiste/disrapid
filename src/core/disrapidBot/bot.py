@@ -2,6 +2,7 @@ from discord.ext import commands
 import sys
 import logging
 from db.interface import DisrapidDb
+from helpers import YouTubeHelper
 
 ADMINISTRATOR = 0x00000008
 
@@ -20,6 +21,9 @@ class Disrapid(commands.Bot):
             if self._db_sanity_check(self.config.schema_version) is not True:
                 # db santiy check failed, need to repair database
                 raise Exception("database sanity check failed!")
+
+            if self.config.youtube:
+                self.youtube = YouTubeHelper(self.config.developer_key)
 
         except Exception as e:
             logging.fatal(e)

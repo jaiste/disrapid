@@ -1,4 +1,3 @@
-import discord
 import logging
 from discord.ext import commands
 from db.guild import Guild
@@ -7,40 +6,61 @@ from db.guild import Guild
 class Welcome(commands.Cog, name="Welcome Message Extension"):
     def __init__(self, bot):
         self.bot = bot
+        self.db = self.bot.db
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        channel = member.guild.system_channel
-        if channel is not None:
-            await channel.send('Welcome {0.mention}.'.format(member))
-
-    @commands.command()
-    async def welcometest(self, ctx, *, member: discord.Member = None):
-        member = member or ctx.author
-
-        # get welcomemessage for current server
+        # send a welcomemessage to new member if activated
         try:
-            # init new session
-            session = self.bot.db.Session()
+            s = self.db.Session()
 
-            guild = session.query(Guild).get(member.guild.id)
+            guild = s.query(Guild).get(member.guild.id)
             message = guild.welcomemessage
 
             if message is None:
-                raise Exception("no active welcomemessage for this server")
+                logging.debug(
+                    "cogs.welcome.on_member_join: no message " +
+                    f"found for guild-{member.guild.id}"
+                )
             else:
+                logging.debug(
+                    "cogs.welcome.on_member_join: format message " +
+                    f"for guild-{member.guild.id}"
+                )
+                # format message, replace wars
+                msg = message.text.replace(
+                    "$username",
+                    member.mention
+                )
+                msg = msg.replace(
+                    "\\n",
+                    "\n"
+                )
+
                 # check if channel_id is set -> send this message to a channel
                 # if not -> send this to a user via DM
                 if message.channel_id is not None:
-                    await self.bot.channel(message.channel_id) \
-                                          .send(message.text)
-                else:
-                    await member.send(message.text)
+                    logging.debug(
+                        "cogs.welcome.on_member_join: send message " +
+                        f"for guild-{member.guild.id} to channel-" +
+                        f"{message.channel_id}"
+                    )
 
-            session.close()
+                    await self.bot.channel(
+                        message.channel_id
+                    ).send(msg)
+                else:
+                    logging.debug(
+                        "cogs.welcome.on_member_join: send message " +
+                        f"for guild-{member.guild.id} to user via DM"
+                    )
+
+                    await member.send(msg)
+
+            s.close()
 
         except Exception as e:
-            logging.debug(e)
+            logging.error(e)
 
 
 def setup(bot):

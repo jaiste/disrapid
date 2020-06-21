@@ -34,6 +34,13 @@ class Sync(commands.Cog, name="Sync Function"):
 
             session.close()
 
+            # bot is done with sync
+            await self.bot.change_presence(
+                activity=discord.Game(
+                    name="disrapid.com"
+                )
+            )
+
         except Exception as e:
             logging.error(f"couldn't perform full sync check reason: {e}")
 
