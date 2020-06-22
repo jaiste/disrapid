@@ -46,16 +46,16 @@
             {% endif %}
         {% endwith %}
 
-        {% if session.logged_in == True %}
-            {% include 'includes/_navbar.html' %}
-        {% endif %}
+        
+        {% include 'includes/_navbar.html' %}
+        
 
         <div class="container-fluid">
             <div class="row">
 
-                {% if session.logged_in == True %}
-                    {% include 'includes/_sidemenu.html' %}
-                {% endif %}
+                
+                {% include 'includes/_sidemenu.html' %}
+                
 
                 <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4 py-md-4">
 
