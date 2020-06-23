@@ -7,6 +7,7 @@ from flask import (
     request,
     session,
     flash,
+    abort,
 )
 
 import logging
@@ -14,8 +15,12 @@ import os
 import sys
 from functools import wraps
 from requests_oauthlib import OAuth2Session
+import re
 
 from db.interface import DisrapidDb
+from db.guild import Guild
+from sqlalchemy import exists
+
 # from db.guild import Guild, Role, Channel, Welcomemessage
 
 import ptvsd
@@ -67,6 +72,10 @@ except Exception as e:
     sys.exit(1)
 
 
+def is_number(inputstring):
+    return bool(re.match("^[0-9]*$", inputstring))
+
+
 def token_updater(token):
     session['oauth2_token'] = token
 
@@ -104,8 +113,16 @@ def guild_selected(f):
             return f(*args, **kwargs)
         else:
             flash('Select your server first!', 'info')
-            return redirect(url_for('view_select_guild'))
+            return redirect(url_for('view_guilds'))
     return wrap
+
+
+def value_exists_in(in_list, key, value):
+    for item in in_list:
+        if value == item[key]:
+            return True
+            break
+    return False
 
 
 @app.route('/assets/<path:path>')
@@ -178,102 +195,75 @@ def callback():
         session['user_data'] = discord.get(API_BASE_URL + '/users/@me') \
             .json()
 
-        return redirect(url_for('view_select_guild'))
+        return redirect(url_for('view_guilds'))
     except Exception as e:
         logging.error(e)
 
 
+@app.route('/guilds', methods=['GET'])
+@logged_in
+def view_guilds():
+    # this represents the guilds view
+    # when a user has logged in we need to let him select the guild
+    # we query all guilds where the user has administrator rights and
+    # check whether disrapid has joined this guild
+    # --
+    #
+    respond_servers = []
+
+    s = db.Session()
+
+    for guild in session['guild_data']:
+        if guild['permissions'] & ADMINISTRATOR == ADMINISTRATOR:
+            # user is admin on this server, check if disrapid has joined
+            if s.query(exists().where(Guild.id == guild["id"])).scalar():
+                respond_servers.append(
+                    {
+                        "id": guild["id"],
+                        "icon": guild["icon"],
+                        "name": guild["name"],
+                    }
+                )
+
+    s.close()
+
+    return render_template('guilds.html', servers=respond_servers)
+
+
 @app.route('/select_guild', methods=['GET'])
 @logged_in
-def view_select_guild():
-    pass
+def select_guild():
+    # this represents the guild selector function
+    # once a user has trasmitted a guild id we need to validate the data first
+    # and save the guild identifier in the session variables
+    # --
+    #
+    if "guild_id" in request.args:
+        guild_id = request.args.get("guild_id")
+    else:
+        abort(400)
 
+    # validate guild_id
+    if not is_number(guild_id) or \
+            value_exists_in(session["guild_data"], "id", guild_id) is False:
+        abort(403)
 
-@app.route('/select_guild', methods=['POST'])
-@logged_in
-def post_select_guild():
-    pass
+    s = db.Session()
 
+    # check if guild_id is in db
+    if not s.query(exists().where(Guild.id == guild_id)).scalar():
+        abort(403)
 
-# @app.route('/select_server')
-# @logged_in
-# def view_select_guild():
-#     # This represents the server selector function
-#     # ---
-#     #
-#     # Once the user is logged in we need him to select a server first
-#     # We collect all servers the user has access to and show them all servers
-#     # he is admin compared with our disrapid database
-#     # If the user has not invited disrapid to this server, we will present him
-#     # a link to do so
-# 
-#     dbsession = db.Session()
-# 
-#     guild_id = request.args.get("guild_id")
-#     ip_addr = request.remote_addr
-# 
-#     dbguilds = dbsession.query
-#     
-#     if not guild_id:
-#         # user has not selected a server, show a list of all servers the user
-#         # can select
-# 
-#         respond_servers = []
-# 
-#         for guild in session['guild_data']:
-#             # check if user is admin on this server
-#             logging.debug(f"guild: {guild}")
-#             
-#             # permission calculation
-#             if guild['permissions'] & ADMINISTRATOR == ADMINISTRATOR:
-#                 # user is admin on this server, check if disrapid has joined
-#                 # this server
-#                 
-#                 
-# 
-#                 if newserver != None:
-#                     # disrapid has joined this server before
-#                     logging.debug(f"server: {newserver}")
-#                     newserver["guild_avatar"] = guild["icon"]
-#                     respond_servers.append(newserver)
-#                 else:
-#                     # disrapid hasn't joined this server
-#                     #
-#                     # ADD IMPLEMENTATION
-#                     # --
-#                     # show this server as "new server", invite disrapid to
-#                     # this server
-#                     pass
-#         
-#         return render_template('select_server.html', servers=respond_servers)
-#     else:
-#         # user has selected server,
-#         # check if user has access to guild_id
-#         if not only_number(guild_id):
-#             logging.warning(f'[RISK] from ip_addr-{ip_addr} user-{session["user_data"]["id"]} ({session["user_data"]["username"]}) has tried to modify guild_id input!')
-#             flash('Server_id violation!', 'danger')
-#             return redirect(url_for('view_select_server'))
-# 
-#         for guild in session['guild_data']:
-#             if guild_id == guild['id']:
-#                 session['guild_id'] = guild_id
-#                 session['server_name'] = guild['name']
-#                 break
-#         
-#         if 'guild_id' not in session:
-#             # user has no acces to this server!
-#             # this shouldn`t happen in normal environment, alert admin with
-#             # a risk log
-#             logging.warning(f'[RISK] from ip_addr-{ip_addr} user-{session["user_data"]["id"]} ({session["user_data"]["username"]}) has tried to select server-{guild_id} where he has no permissions!')
-#             flash('You are not allowed to access this server!', 'danger')
-#             return redirect(url_for('view_select_server'))
-# 
-#         return redirect(url_for('view_dashboard'))
+    session['guild_id'] = guild_id
+
+    s.close()
+
+    return render_template('dashboard.html')
 
 
 @app.route('/')
-# @logged_in
-# @guild_selected
+@logged_in
+@guild_selected
 def view_dashboard():
     return render_template('dashboard.html')
 

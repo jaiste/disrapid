@@ -1,78 +1,57 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
 
-        <title>Disrapid Administrator</title>
+		<title>Disrapid Administrator</title>
 
-        <!-- Bootstrap core CSS -->
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+		<link rel="stylesheet" href="./assets/style.css">
 
-        <style>
-        .bd-placeholder-img {
-            font-size: 1.125rem;
-            text-anchor: middle;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
+	</head>
+	<body>
 
-        @media (min-width: 76   8px) {
-            .bd-placeholder-img-lg {
-            font-size: 3.5rem;
-            }
-        }
-        </style>
-    
-        <!-- Custom styles for this template -->
-        <link rel="stylesheet" href="./assets/style.css">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+			<div class="alert alert-{{ messages.0.0 }} alert-dismissible fade show" role="alert">
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				{% for category, message in messages %}
+					{{ message }} </br>
+				{% endfor %}
+			</div>
+			{% endif %}
+		{% endwith %}
 
-    </head>
-    <body>
+		{% include 'includes/_navbar.html' %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="alert alert-{{ messages.0.0 }} alert-dismissible fade show" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                {% for category, message in messages %}
-                {{ message }} </br>
-                {% endfor %}
-            </div>
-            {% endif %}
-        {% endwith %}
+		<div class="container-fluid">
+			<div class="row">
 
-        
-        {% include 'includes/_navbar.html' %}
-        
+				<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+					{% if "guild_id" in session %}
+						{% include 'includes/_sidemenu.html' %}
+					{% endif %}
+				</nav>
 
-        <div class="container-fluid">
-            <div class="row">
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4 py-md-4">
 
-                
-                {% include 'includes/_sidemenu.html' %}
-                
+				{% block body %}{% endblock %}
 
-                <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4 py-md-4">
+				</main>
+			</div>
+		</div>
 
-                {% block body %}{% endblock %}
+		<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+		<script src=".assets/script.js"></script>
 
-                </main>
-            </div>
-        </div>
-
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-        <script src=".assets/script.js"></script>
-
-        <script>
-            feather.replace()
-        </script>
-    </body>
+		<script>
+			feather.replace()
+		</script>
+	</body>
 </html>
