@@ -20,7 +20,7 @@ class Guild(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     notify_channel_id = Column(Integer, nullable=True)
-    
+
     welcomemessage = relationship("Welcomemessage",
                                   uselist=False,
                                   back_populates="guild",
@@ -42,7 +42,7 @@ class Welcomemessage(Base):
     text = Column(String)
     enable = Column(Integer)
     channel_id = Column(Integer, ForeignKey('guilds_channels.id'))
-   
+
     guild = relationship("Guild", back_populates="welcomemessage")
     channel = relationship("Channel")
 

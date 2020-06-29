@@ -1,4 +1,13 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, null
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Boolean,
+    ForeignKey,
+    DateTime,
+    null,
+    BigInteger
+)
 from sqlalchemy.orm import relationship
 from . import Base
 
@@ -6,12 +15,12 @@ from . import Base
 class Youtube(Base):
     __tablename__ = 'youtube'
 
-    id = Column(Integer, primary_key=True)
-    valid = Column(Integer)
-    ytchannel_id = Column(String)
+    id = Column(BigInteger, primary_key=True)
+    valid = Column(Boolean)
+    ytchannel_id = Column(String(255))
     last_seen = Column(DateTime, nullable=True, default=null)
     last_goal = Column(Integer)
-    
+
     activities = relationship("Activity",
                               back_populates="youtube",
                               cascade="all, delete, delete-orphan")
@@ -21,9 +30,9 @@ class Youtube(Base):
 class Activity(Base):
     __tablename__ = 'youtube_activities'
 
-    id = Column(String, primary_key=True)
-    youtube_id = Column(Integer, ForeignKey('youtube.id'))
-    last_sequence = Column(String)
+    id = Column(String(255), primary_key=True)
+    youtube_id = Column(BigInteger, ForeignKey('youtube.id'))
+    last_sequence = Column(String(255))
 
     youtube = relationship("Youtube", back_populates="activities")
 
@@ -34,5 +43,5 @@ class Goals(Base):
     id = Column(Integer, primary_key=True)
     min = Column(Integer)
     max = Column(Integer)
-    image = Column(String)
-    text = Column(String)
+    image = Column(String(255))
+    text = Column(String(2000))
