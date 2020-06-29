@@ -51,7 +51,7 @@ services:
             - MYSQL_USER=${DB_USER}
             - MYSQL_PASSWORD=${DB_PASS}
         ports:
-            - 33066:3306
+            - 32066:3306
         volumes:
             - db_vol:/var/lib/mysql
             - ./config/database/10-dev.cnf:/etc/mysql/conf.d/10-dev.cnf

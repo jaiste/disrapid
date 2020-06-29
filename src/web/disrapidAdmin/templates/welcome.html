@@ -4,16 +4,27 @@
 
 <div class="container">
 
-  <div class="row">
-    {% for server in servers %}
-      <a href="/select_guild?guild_id={{server.id}}">
-        <div class="col-lg-4">
-          <img class="rounded" src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" width="60" height="60">
-          <p class="text-center">{{ server.name }}</p>
-        </div>
-      </a>
-    {% endfor %}
-  </div>
+  <form action="welcome" method=post>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        {{ form.enabled.label }}<br>
+        {{ form.enabled }}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        {{ form.message.label }}
+        {{ form.message }}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        {{ form.submit }}
+      </div>
+    </div>
+
+  </form>
 
 </div>
     

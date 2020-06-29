@@ -6,6 +6,9 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED 1
 
+# Install mariadb-client
+RUN apt-get update && apt-get install -y mariadb-client && rm -rf /var/lib/apt
+
 # Install pip requirements
 ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
