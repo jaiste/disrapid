@@ -15,10 +15,34 @@ services:
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
             - DEBUG=true
+            - YOUTUBE_DEVELOPER_KEY=${YOUTUBE_DEVELOPER_KEY}
         links:
             - database:database
         ports:
             - 5050:5050
+
+    web:
+        depends_on: 
+            - database
+        build:
+            context: ./src/web
+            dockerfile: ./Dockerfile
+        environment:
+            - DISCORD_OAUTH2_CLIENT_ID=${DISCORD_OAUTH2_CLIENT_ID}
+            - DISCORD_OAUTH2_CLIENT_SECRET=${DISCORD_OAUTH2_CLIENT_SECRET}
+            - DISCORD_OAUTH2_REDIRECT_URI=${DISCORD_OAUTH2_REDIRECT_URI}
+            - DB_HOST=database
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - SECRET_KEY=${DB_PASS}
+            - DEBUG=true
+            - LOGOUT_REDIRECT_URL=${LOGOUT_REDIRECT_URL}
+        links:
+            - database:database
+        ports:
+            - 5000:5000
+            - 5051:5051
 
     database:
         image: mariadb:latest
@@ -28,7 +52,7 @@ services:
             - MYSQL_USER=${DB_USER}
             - MYSQL_PASSWORD=${DB_PASS}
         ports:
-            - 33066:3306
+            - 32066:3306
         volumes:
             - db_vol:/var/lib/mysql
             - ./config/database/10-dev.cnf:/etc/mysql/conf.d/10-dev.cnf

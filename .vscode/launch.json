@@ -30,7 +30,7 @@
             "request": "attach",
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/src/web/disrapidWeb",
+                    "localRoot": "${workspaceFolder}/src/web/disrapidAdmin",
                     "remoteRoot": "/app",
                 }
             ],

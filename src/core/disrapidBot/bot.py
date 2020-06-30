@@ -2,6 +2,8 @@ from discord.ext import commands
 import sys
 import logging
 from db.interface import DisrapidDb
+from db.migrate import Schema
+from helpers import YouTubeHelper
 
 ADMINISTRATOR = 0x00000008
 
@@ -21,6 +23,9 @@ class Disrapid(commands.Bot):
                 # db santiy check failed, need to repair database
                 raise Exception("database sanity check failed!")
 
+            if self.config.youtube:
+                self.youtube = YouTubeHelper(self.config.developer_key)
+
         except Exception as e:
             logging.fatal(e)
             sys.exit(1)
@@ -28,9 +33,9 @@ class Disrapid(commands.Bot):
     def _db_sanity_check(self, schema_version):
         # do db sanity check + update schema when needed
         try:
-            session = self.db.Session()
+            s = self.db.Session()
 
-            db_schema_version = self.db.get_schema_version(session)
+            db_schema_version = s.query(Schema).one()
 
             logging.debug(f"db_schema_version={db_schema_version}")
             if db_schema_version.id < schema_version:
@@ -40,12 +45,12 @@ class Disrapid(commands.Bot):
             # check if db is healthy
             pass
 
-            session.close()
+            s.close()
             return True
 
         except Exception as e:
             logging.fatal(f"couldn't perform santiy check reason: {e}")
-            session.close()
+            s.close()
             return False
 
     def load_extension(self, extension):
