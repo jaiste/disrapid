@@ -1,7 +1,7 @@
 from discord.ext import commands
 import sys
 import logging
-from db.interface import DisrapidDb
+from interface import DisrapidDb
 from db.migrate import Schema
 from helpers import YouTubeHelper
 
@@ -18,6 +18,9 @@ class Disrapid(commands.Bot):
                                  user=self.config.db_user,
                                  passwd=self.config.db_pass,
                                  name=self.config.db_name)
+
+            if not self.db.engine.dialect.has_table(self.db.engine, "schema"):
+                raise Exception("database schema is not existing!")
 
             if self._db_sanity_check(self.config.schema_version) is not True:
                 # db santiy check failed, need to repair database
@@ -40,7 +43,7 @@ class Disrapid(commands.Bot):
             logging.debug(f"db_schema_version={db_schema_version}")
             if db_schema_version.id < schema_version:
                 # db schema needs to be updated
-                pass
+                raise Exception("schema needs to be updated first!")
 
             # check if db is healthy
             pass

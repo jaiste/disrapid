@@ -61,7 +61,8 @@ if __name__ == "__main__":
     # load extensions
     client.load_extension("cogs.welcome")
     client.load_extension("cogs.sync")
-    client.load_extension("cogs.notification")
+    if config.youtube is True:
+        client.load_extension("cogs.notification")
 
     client.run(DISCORD_TOKEN)
 

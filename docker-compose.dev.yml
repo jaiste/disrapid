@@ -16,6 +16,7 @@ services:
             - DB_PASS=${DB_PASS}
             - DEBUG=true
             - YOUTUBE_DEVELOPER_KEY=${YOUTUBE_DEVELOPER_KEY}
+            - DO_FULL_SYNC=true
         links:
             - database:database
         ports:
