@@ -16,6 +16,7 @@ try:
         # in debug mode we need to wait for debugger to connect
         ptvsd.wait_for_attach()
         logging.basicConfig(level=logging.DEBUG)
+        # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
     else:
         # debug mode is not enabled, running in production mode...
         pass

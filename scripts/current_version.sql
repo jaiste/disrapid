@@ -99,8 +99,8 @@ CREATE TABLE `youtube_activities` (
 
 CREATE TABLE `youtube_goals` (
   `id` INT NOT NULL,
-  `min` VARCHAR(45) NOT NULL,
-  `max` VARCHAR(45) NOT NULL,
+  `min` INT NOT NULL,
+  `max` INT NOT NULL,
   `image` VARCHAR(255) NULL DEFAULT NULL,
   `text` VARCHAR(2000) NOT NULL,
   PRIMARY KEY (`id`));

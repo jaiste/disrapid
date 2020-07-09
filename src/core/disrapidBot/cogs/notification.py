@@ -24,21 +24,29 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
         try:
             start_time = datetime.now()
 
+            seq = random.getrandbits(32)  # generate sequence id
+            logging.debug(f"starting new sequence notify_yt_goals-{seq}")
+
             s = self.db.Session()
             ytchannels = s.query(Youtube) \
                 .filter(Youtube.valid == 1).all()
 
             if ytchannels is None:
-                # there are no yt channels at all configured,
-                # skip look
-                logging.info("no yt channels to follow, skip loop")
+                # if there are no yt channels at all configured, skip loop
+                logging.debug(f"notify_yt_goals-{seq} no yt channels to " +
+                              "follow, skipping loop")
                 return
 
             # check all yt channels, if a new goal was reached
             for ytchannel in ytchannels:
-                # query channel statistics
+                logging.debug(f"notify_yt_goals-{seq} checking channel-" +
+                              f"{ytchannel.ytchannel_id} current stats")
+                # query channel statistics from YT API
                 ytc = self.bot.youtube \
                     .get_channel_information(ytchannel.ytchannel_id)
+
+                logging.debug(f"notify_yt_goals-{seq} current goal=" +
+                              f"{ytc.subscriberCount}")
 
                 # get the current goal values that refers to
                 # current subscribercount from db
