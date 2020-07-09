@@ -24,21 +24,29 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
         try:
             start_time = datetime.now()
 
+            seq = random.getrandbits(32)  # generate sequence id
+            logging.debug(f"starting new sequence notify_yt_goals-{seq}")
+
             s = self.db.Session()
             ytchannels = s.query(Youtube) \
                 .filter(Youtube.valid == 1).all()
 
             if ytchannels is None:
-                # there are no yt channels at all configured,
-                # skip look
-                logging.info("no yt channels to follow, skip loop")
+                # if there are no yt channels at all configured, skip loop
+                logging.debug(f"notify_yt_goals-{seq} no yt channels to " +
+                              "follow, skipping loop")
                 return
 
             # check all yt channels, if a new goal was reached
             for ytchannel in ytchannels:
-                # query channel statistics
+                logging.debug(f"notify_yt_goals-{seq} checking channel-" +
+                              f"{ytchannel.ytchannel_id} current stats")
+                # query channel statistics from YT API
                 ytc = self.bot.youtube \
                     .get_channel_information(ytchannel.ytchannel_id)
+
+                logging.debug(f"notify_yt_goals-{seq} current goal=" +
+                              f"{ytc.subscriberCount}")
 
                 # get the current goal values that refers to
                 # current subscribercount from db
@@ -49,11 +57,18 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
                 if goalval is None:
                     # something went wrong when trying to get
                     # current goal, report error an continue loop
+                    logging.error(f"notify_yt_goals-{seq} there was an " +
+                                  "error in checking goals for chanenl-" +
+                                  f"{ytchannel.ytchannels}")
                     pass
 
                 if ytchannel.last_goal is None:
                     # we didn't checked the goal value for this yt
                     # channel before, check it and exit loop
+                    logging.debug(f"notify_yt_goals-{seq} channel-" +
+                                  f"{ytchannel.ytchannels} was never queried" +
+                                  "before, inserting values in database")
+
                     s.query(Youtube) \
                         .filter(
                             Youtube.id == ytchannel.id
@@ -62,6 +77,7 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
                             Youtube.last_goal: goalval.id,
                             Youtube.last_seen: datetime.now(),
                         })
+
                 else:
 
                     # compare if goalval is greater than last goal
@@ -69,6 +85,10 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
                         # channel has reached a new subscriber goal!
                         # send a notification for all guilds that are
                         # following this channel and update last goal
+                        logging.debug(f"notify_yt_goals-{seq} channel-" +
+                                      f"{ytchannel.ytchannels} was rea" +
+                                      "ched a new goal! notifying guilds")
+
                         s.query(Youtube) \
                             .filter(
                                 Youtube.id == ytchannel.id
@@ -118,6 +138,10 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
                     else:
                         # nothing has changed for this channel, update
                         # last seen value in db an continue loop
+                        logging.debug(f"notify_yt_goals-{seq} channel-" +
+                                      f"{ytchannel.ytchannels} as not change" +
+                                      "d it's last goal, updating last seen")
+
                         s.query(Youtube) \
                             .filter(
                                 Youtube.id == ytchannel.id
@@ -162,7 +186,8 @@ class YoutubeAPI(commands.Cog, name="Youtube API"):
             if ytchannels is None:
                 # there are no yt channels at all configured,
                 # skip look
-                logging.info("no yt channels to follow, skip loop")
+                logging.debug(f"notify_yt_goals-{seq} no yt channels to " +
+                              "follow, skipping loop")
                 return
 
             # check all yt channels, if there is a new activity

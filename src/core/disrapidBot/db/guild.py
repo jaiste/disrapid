@@ -39,9 +39,13 @@ class Welcomemessage(Base):
 
     id = Column(Integer, primary_key=True)
     guild_id = Column(Integer, ForeignKey('guilds.id'))
-    text = Column(String)
+    text = Column(String(2000))
     enable = Column(Integer)
-    channel_id = Column(Integer, ForeignKey('guilds_channels.id'))
+    channel_id = Column(
+        Integer,
+        ForeignKey('guilds_channels.id'),
+        nullable=True
+    )
 
     guild = relationship("Guild", back_populates="welcomemessage")
     channel = relationship("Channel")
