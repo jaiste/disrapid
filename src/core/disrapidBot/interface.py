@@ -8,13 +8,15 @@ class DisrapidDb:
 
     def __init__(self, *args, **kwargs):
         try:
-            self.engine = create_engine('mysql+pymysql://' +
-                                        f'{kwargs.pop("user")}:' +
-                                        f'{kwargs.pop("passwd")}@' +
-                                        f'{kwargs.pop("host")}' +
-                                        ':3306/' +
-                                        f'{kwargs.pop("name")}' +
-                                        '?charset=utf8mb4')
+            self.engine = create_engine(
+                'mysql+pymysql://' +
+                f'{kwargs.pop("user")}:' +
+                f'{kwargs.pop("passwd")}@' +
+                f'{kwargs.pop("host")}' +
+                ':3306/' +
+                f'{kwargs.pop("name")}' +
+                '?charset=utf8mb4'  # utf8mb4 needed for emoji support
+            )
 
             self.Session = sessionmaker(bind=self.engine)
 
