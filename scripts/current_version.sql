@@ -18,9 +18,9 @@ CREATE TABLE `guilds_channels` (
   `name` VARCHAR(255) NOT NULL,
   `channeltype` ENUM("text", "voice", "private", "group", "category", "news", "store") NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_channels_guilds_idx` (`guild_id` ASC) VISIBLE,
+  INDEX `fk_channels_guild_idx` (`guild_id` ASC),
   CONSTRAINT `fk_channels_guilds`
-    FOREIGN KEY (`guilds_id`)
+    FOREIGN KEY (`guild_id`)
     REFERENCES `guilds` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
@@ -32,13 +32,13 @@ CREATE TABLE `guilds_welcomemessage` (
   `enable` TINYINT(1) NOT NULL,
   `channel_id` BIGINT(32) NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_welcomemessage_channel_id_idx` (`channel_id` ASC) VISIBLE,
+  INDEX `fk_welcomemessage_channel_id_idx` (`channel_id` ASC),
   CONSTRAINT `fk_welcomemessage_channel_id`
     FOREIGN KEY (`channel_id`)
     REFERENCES `guilds_channels` (`id`)
     ON DELETE CASCADE
     ON UPDATE RESTRICT,
-  INDEX `fk_welcomemessage_guild_id_idx` (`guild_id` ASC) VISIBLE,
+  INDEX `fk_welcomemessage_guild_id_idx` (`guild_id` ASC),
     CONSTRAINT `fk_welcomemessage_guild_id`
     FOREIGN KEY (`guild_id`)
     REFERENCES `guilds` (`id`)
@@ -50,7 +50,7 @@ CREATE TABLE `guilds_roles` (
   `guild_id` BIGINT(32) NOT NULL,
   `name` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_roles_guild_id_idx` (`guild_id` ASC) VISIBLE,
+  INDEX `fk_roles_guild_id_idx` (`guild_id` ASC),
   CONSTRAINT `fk_roles_guild_id`
     FOREIGN KEY (`guild_id`)
     REFERENCES `guilds` (`id`)
@@ -73,7 +73,7 @@ CREATE TABLE `guilds_youtubefollow` (
   `monitor_streams` TINYINT(1) NOT NULL DEFAULT 0,
   `remind_streams` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`guild_id`, `youtube_id`),
-  INDEX `fk_youtubefollow_youtube_id_idx` (`youtube_id` ASC) VISIBLE,
+  INDEX `fk_youtubefollow_youtube_id_idx` (`youtube_id` ASC),
   CONSTRAINT `fk_youtubefollow_guild_id`
     FOREIGN KEY (`guild_id`)
     REFERENCES `guilds` (`id`)
@@ -90,7 +90,7 @@ CREATE TABLE `youtube_activities` (
   `youtube_id` BIGINT(32) NOT NULL,
   `last_sequence` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_activities_youtube_id_idx` (`youtube_id` ASC) VISIBLE,
+  INDEX `fk_activities_youtube_id_idx` (`youtube_id` ASC),
   CONSTRAINT `fk_activities_youtube_id`
     FOREIGN KEY (`youtube_id`)
     REFERENCES `youtube` (`id`)

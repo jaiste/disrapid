@@ -173,7 +173,9 @@ class Sync(commands.Cog, name="Sync Function"):
     @commands.has_permissions(administrator=True)
     async def isowner(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
-        await member.send("yes you are bot owner!")
+        owner = (await self.bot.application_info()).owner
+        if member.id == owner.id:
+            await member.send("yes you are bot owner!")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
