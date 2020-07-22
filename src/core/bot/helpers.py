@@ -1,5 +1,14 @@
 from googleapiclient.discovery import build
 import logging
+import re
+
+
+def is_number(inputstring):
+    return bool(re.match("^[0-9]*$", inputstring))
+
+
+def is_string(inputstring):
+    return bool(re.match("^[A-z0-9]*$", inputstring))
 
 
 class YouTubeHelper():

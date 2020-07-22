@@ -1,7 +1,7 @@
 import discord
 import logging
 from discord.ext import commands
-from db.guild import Guild, Channel, Role
+import models
 from sqlalchemy import exists
 
 
@@ -64,7 +64,7 @@ class Sync(commands.Cog, name="Sync Function"):
         try:
             session = self.db.Session()
 
-            guild = session.query(Guild).get(guild.id)
+            guild = session.query(models.Guild).get(guild.id)
             session.delete(guild)
             session.commit()
 
@@ -79,11 +79,12 @@ class Sync(commands.Cog, name="Sync Function"):
             # init new session
             session = self.db.Session()
 
-            new_channel = Channel(id=channel.id,
-                                  guild_id=channel.guild.id,
-                                  name=channel.name,
-                                  channeltype=channel.type.name
-                                  )
+            new_channel = models.Channel(
+                id=channel.id,
+                guild_id=channel.guild.id,
+                name=channel.name,
+                channeltype=channel.type.name
+            )
             session.add(new_channel)
 
         except Exception as e:
@@ -95,7 +96,7 @@ class Sync(commands.Cog, name="Sync Function"):
             # init new session
             session = self.db.Session()
 
-            db_channel = session.query(Channel).get(channel.id)
+            db_channel = session.query(models.Channel).get(channel.id)
             session.delete(db_channel)
             session.commit()
 
@@ -107,9 +108,14 @@ class Sync(commands.Cog, name="Sync Function"):
         try:
             session = self.db.Session()
 
-            session.query(Channel).filter(Channel.id == new_channel.id,
-                                          Channel.name != new_channel.name) \
-                                  .update({Channel.name: new_channel.name})
+            session.query(
+                models.Channel
+            ).filter(
+                models.Channel.id == new_channel.id,
+                models.Channel.name != new_channel.name
+            ).update(
+                {models.Channel.name: new_channel.name}
+            )
 
             session.commit()
             session.close()
@@ -123,10 +129,11 @@ class Sync(commands.Cog, name="Sync Function"):
             # init new session
             session = self.db.Session()
 
-            new_role = Role(id=role.id,
-                            guild_id=role.guild.id,
-                            name=role.name,
-                            )
+            new_role = models.Role(
+                id=role.id,
+                guild_id=role.guild.id,
+                name=role.name
+            )
             session.add(new_role)
 
         except Exception as e:
@@ -138,7 +145,7 @@ class Sync(commands.Cog, name="Sync Function"):
             # init new session
             session = self.db.Session()
 
-            db_role = session.query(Role).get(role.id)
+            db_role = session.query(models.Role).get(role.id)
             session.delete(db_role)
             session.commit()
 
@@ -150,9 +157,14 @@ class Sync(commands.Cog, name="Sync Function"):
         try:
             session = self.db.Session()
 
-            session.query(Channel).filter(Channel.id == new_role.id,
-                                          Channel.name != new_role.name) \
-                                  .update({Channel.name: new_role.name})
+            session.query(
+                models.Channel
+            ).filter(
+                models.Channel.id == new_role.id,
+                models.Channel.name != new_role.name
+            ).update(
+                {models.Channel.name: new_role.name}
+            )
 
             session.commit()
             session.close()
@@ -179,37 +191,28 @@ class Sync(commands.Cog, name="Sync Function"):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def delguild(self, ctx, *, member: discord.Member = None):
+    async def resetconfig(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
         try:
             # init new session
             session = self.db.Session()
 
-            guild = session.query(Guild).get(member.guild.id)
+            # delete guilds config
+            guild = session.query(models.Guild).get(member.guild.id)
             session.delete(guild)
             session.commit()
 
-            await member.send("guild config was deleted from database")
-
-        except Exception as e:
-            logging.error(e)
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def syncguild(self, ctx, *, member: discord.Member = None):
-        member = member or ctx.author
-        try:
-            # init new session
-            session = self.db.Session()
-
+            # perform full guild sync
             await Sync._full_guild_sync(session, member.guild)
 
             session.commit()
 
-            await member.send("guild was synced via full_sync")
+            # send response to channel
+            await member.send("guild configuration was resetted")
 
         except Exception as e:
             logging.error(e)
+            await member.send("an error occurred, please contact support")
 
     # CLASS STATIC METHODS
     # ---
@@ -219,47 +222,58 @@ class Sync(commands.Cog, name="Sync Function"):
         # sync guild to database
         try:
             if session.query(exists()
-                             .where(Guild.id == guild.id)).scalar():
-                session.query(Guild) \
-                       .filter(Guild.id == guild.id,
-                               Guild.name != guild.name) \
-                       .update({Guild.name: guild.name})
+                             .where(models.Guild.id == guild.id)).scalar():
+                session.query(models.Guild) \
+                       .filter(models.Guild.id == guild.id,
+                               models.Guild.name != guild.name) \
+                       .update({models.Guild.name: guild.name})
             else:
-                new_guild = Guild(id=guild.id,
-                                  name=guild.name)
+                new_guild = models.Guild(
+                    id=guild.id,
+                    name=guild.name
+                )
                 session.add(new_guild)
 
             # we need to sync all channels
             for channel in guild.channels:
                 # sync channel to database
-                if session.query(exists()
-                                 .where(Channel.id == channel.id)).scalar():
-                    session.query(Channel) \
-                        .filter(Channel.id == channel.id,
-                                Channel.name != channel.name) \
-                        .update({Channel.name: channel.name})
+                if session.query(
+                    exists()
+                    .where(
+                        models.Channel.id == channel.id
+                        )).scalar():
+                    session.query(
+                        models.Channel
+                    ).filter(
+                        models.Channel.id == channel.id,
+                        models.Channel.name != channel.name
+                    ).update(
+                        {models.Channel.name: channel.name}
+                    )
                 else:
-                    new_channel = Channel(id=channel.id,
-                                          guild_id=guild.id,
-                                          name=channel.name,
-                                          channeltype=channel.type.name
-                                          )
+                    new_channel = models.Channel(
+                        id=channel.id,
+                        guild_id=guild.id,
+                        name=channel.name,
+                        channeltype=channel.type.name
+                    )
                     session.add(new_channel)
 
             # we need to sync all roles
             for role in guild.roles:
                 # sync role to database
                 if session.query(exists()
-                                 .where(Role.id == role.id)).scalar():
-                    session.query(Role) \
-                        .filter(Role.id == role.id,
-                                Role.name != role.name) \
-                        .update({Role.name: role.name})
+                                 .where(models.Role.id == role.id)).scalar():
+                    session.query(models.Role) \
+                        .filter(models.Role.id == role.id,
+                                models.Role.name != role.name) \
+                        .update({models.Role.name: role.name})
                 else:
-                    new_role = Role(id=role.id,
-                                    guild_id=guild.id,
-                                    name=role.name,
-                                    )
+                    new_role = models.Role(
+                        id=role.id,
+                        guild_id=guild.id,
+                        name=role.name
+                    )
                     session.add(new_role)
 
             session.commit()
@@ -272,27 +286,31 @@ class Sync(commands.Cog, name="Sync Function"):
     async def _full_guild_add(session, guild):
         # add guild to database
         try:
-            new_guild = Guild(id=guild.id,
-                              name=guild.name)
+            new_guild = models.Guild(
+                id=guild.id,
+                name=guild.name
+            )
             session.add(new_guild)
 
             # we need to add all channels
             for channel in guild.channels:
                 # add channel to database
-                new_channel = Channel(id=channel.id,
-                                      guild_id=guild.id,
-                                      name=channel.name,
-                                      channeltype=channel.type.name
-                                      )
+                new_channel = models.Channel(
+                    id=channel.id,
+                    guild_id=guild.id,
+                    name=channel.name,
+                    channeltype=channel.type.name
+                )
                 session.add(new_channel)
 
             # we need to add all roles
             for role in guild.roles:
                 # add role to database
-                new_role = Role(id=role.id,
-                                guild_id=guild.id,
-                                name=role.name,
-                                )
+                new_role = models.Role(
+                    id=role.id,
+                    guild_id=guild.id,
+                    name=role.name,
+                )
                 session.add(new_role)
 
             session.commit()

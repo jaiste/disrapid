@@ -5,37 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
             "name": "Attach core",
             "type": "python",
             "request": "attach",
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/src/core/disrapidBot",
+                    "localRoot": "${workspaceFolder}/src/core/bot",
                     "remoteRoot": "/app",
                 }
             ],
             "port": 5050,
             "host": "localhost"
-        },
-        {
-            "name": "Attach web",
-            "type": "python",
-            "request": "attach",
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src/web/disrapidAdmin",
-                    "remoteRoot": "/app",
-                }
-            ],
-            "port": 5051,
-            "host": "localhost"
-        },
+        }
     ]
 }

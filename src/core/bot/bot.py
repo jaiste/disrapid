@@ -2,7 +2,7 @@ from discord.ext import commands
 import sys
 import logging
 from interface import DisrapidDb
-from db.migrate import Schema
+import models
 from helpers import YouTubeHelper
 
 ADMINISTRATOR = 0x00000008
@@ -38,7 +38,7 @@ class Disrapid(commands.Bot):
         try:
             s = self.db.Session()
 
-            db_schema_version = s.query(Schema).one()
+            db_schema_version = s.query(models.Schema).one()
 
             logging.debug(f"db_schema_version={db_schema_version}")
             if db_schema_version.id < schema_version:

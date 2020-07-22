@@ -60,10 +60,9 @@ if __name__ == "__main__":
     client = Disrapid(command_prefix=".", config=config)
 
     # load extensions
-    client.load_extension("cogs.welcome")
     client.load_extension("cogs.sync")
     if config.youtube is True:
-        client.load_extension("cogs.notification")
+        client.load_extension("cogs.youtube")
 
     client.run(DISCORD_TOKEN)
 

@@ -18,8 +18,8 @@ class Youtube(Base):
     id = Column(BigInteger, primary_key=True)
     valid = Column(Boolean)
     ytchannel_id = Column(String(255))
-    last_seen = Column(DateTime, nullable=True, default=null)
-    last_goal = Column(Integer, nullable=True, default=null)
+    last_seen = Column(DateTime, nullable=True, default=null())
+    last_goal = Column(Integer, nullable=True, default=null())
 
     activities = relationship("Activity",
                               back_populates="youtube",
