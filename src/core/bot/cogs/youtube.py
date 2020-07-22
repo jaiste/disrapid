@@ -314,30 +314,62 @@ class Youtube(commands.Cog, name="Youtube"):
     @youtube.command()
     async def add(self, ctx, ytchannel_id: str):
         # this will add the yt channel to followinglist
-        if not is_string(ytchannel_id):
-            return
+        try:
+            if not is_string(ytchannel_id):
+                return
 
-        s = self.db.Session()
+            s = self.db.Session()
 
-        # check if channel is already existing in database
-        yt_id = self._get_yt_id(s, ytchannel_id)
+            # check if channel is already existing in database
+            v
 
-        if yt_id is not None:
-            # channel is existing, check if channel is on followlist
-            if self._exists_ytfollow(s, yt_id, ctx.guild.id):
-                # is already on list, send message
-                await ctx.send(
-                    "This channel is already on your followinglist"
-                )
+            if yt_id is not None:
+                # channel is existing, check if channel is on followlist
+                if self._exists_ytfollow(s, yt_id, ctx.guild.id):
+                    # is already on list, send message
+                    await ctx.send(
+                        "This channel is already on your followinglist"
+                    )
+                else:
+                    # channel is not existing, add to list
+                    new_ytf = models.YoutubeFollow(
+                        guild_id=ctx.guild.id,
+                        youtube_id=yt_id,
+                        monitor_videos=0,
+                        monitor_goals=0,
+                        monitor_streams=0,
+                        remind_streams=0
+                    )
+                    s.add(new_ytf)
+                    s.commit()
+
+                    await ctx.send(
+                        "Channel was added to your followinglist"
+                    )
+
             else:
-                # channel is not existing, add to list
+                # channel is not existing, add to the database
+
+                # check if the channel is a valid youtube channel
+                # WIP!
+                #
+
+                new_yt = models.Youtube(
+                    valid=True,
+                    ytchannel_id=ytchannel_id
+                )
+                s.add(new_yt)
+                s.commit()
+
+                yt_id = self._get_yt_id(s, ytchannel_id)
+
                 new_ytf = models.YoutubeFollow(
                     guild_id=ctx.guild.id,
                     youtube_id=yt_id,
                     monitor_videos=0,
                     monitor_goals=0,
                     monitor_streams=0,
-                    remind_streams=0
+                    remind_streams=0,
                 )
                 s.add(new_ytf)
                 s.commit()
@@ -346,91 +378,75 @@ class Youtube(commands.Cog, name="Youtube"):
                     "Channel was added to your followinglist"
                 )
 
-        else:
-            # channel is not existing, add to the database
+            s.close()
 
-            # check if the channel is a valid youtube channel
-            # WIP!
-            #
-
-            new_yt = models.Youtube(
-                valid=True,
-                ytchannel_id=ytchannel_id
+        except Exception as e:
+            logging.error(
+                f"Error in youtube.add command: {e}"
             )
-            s.add(new_yt)
-            s.commit()
-
-            yt_id = self._get_yt_id(s, ytchannel_id)
-
-            new_ytf = models.YoutubeFollow(
-                guild_id=ctx.guild.id,
-                youtube_id=yt_id,
-                monitor_videos=0,
-                monitor_goals=0,
-                monitor_streams=0,
-                remind_streams=0,
-            )
-            s.add(new_ytf)
-            s.commit()
-
-            await ctx.send(
-                "Channel was added to your followinglist"
-            )
-
-        s.close()
+            s.rollback()
+            s.close()
 
     @youtube.command()
     async def rm(self, ctx, ytchannel_id: str):
         # this will remove the yt channel from followinglist
-        if not is_string(ytchannel_id):
-            return
+        try:
+            if not is_string(ytchannel_id):
+                return
 
-        s = self.db.Session()
+            s = self.db.Session()
 
-        yt_id = self._get_yt_id(s, ytchannel_id)
+            yt_id = self._get_yt_id(s, ytchannel_id)
 
-        if yt_id is None:
-            await ctx.send(
-                "Channel is not on your followinglist"
+            if yt_id is None:
+                await ctx.send(
+                    "Channel is not on your followinglist"
+                )
+                return
+
+            # check if this is on followinglist
+            if self._exists_ytfollow(s, yt_id, ctx.guild.id):
+                # is on the guilds followinglist remove it
+                ytf = s.query(
+                    models.YoutubeFollow
+                ).filter(
+                    models.YoutubeFollow.youtube_id == yt_id,
+                    models.YoutubeFollow.guild_id == ctx.guild.id
+                ).one()
+
+                s.delete(ytf)
+
+                # check if this is the last guild, remove it from yt
+                if not s.query(
+                    exists()
+                    .where(
+                        models.YoutubeFollow.youtube_id == yt_id
+                        )).scalar():
+                    ytc = s.query(
+                        models.Youtube
+                    ).get(yt_id)
+
+                    s.delete(ytc)
+
+                s.commit()
+
+                await ctx.send(
+                    "Channel was removed from your followinglist"
+                )
+
+            else:
+                await ctx.send(
+                    "Channel is not on your followinglist"
+                )
+
+            s.close()
+
+        except Exception as e:
+            logging.error(
+                f"Error in youtube.rm command: {e}"
             )
-            return
-
-        # check if this is on followinglist
-        if self._exists_ytfollow(s, yt_id, ctx.guild.id):
-            # is on the guilds followinglist remove it
-            ytf = s.query(
-                models.YoutubeFollow
-            ).filter(
-                models.YoutubeFollow.youtube_id == yt_id,
-                models.YoutubeFollow.guild_id == ctx.guild.id
-            ).one()
-
-            s.delete(ytf)
-
-            # check if this is the last guild, remove it from yt
-            if not s.query(
-                exists()
-                .where(
-                    models.YoutubeFollow.youtube_id == yt_id
-                    )).scalar():
-                ytc = s.query(
-                    models.Youtube
-                ).get(yt_id)
-
-                s.delete(ytc)
-
-            s.commit()
-
-            await ctx.send(
-                "Channel was removed from your followinglist"
-            )
-
-        else:
-            await ctx.send(
-                "Channel is not on your followinglist"
-            )
-
-        s.close()
+            s.rollback()
+            s.close()
 
     @youtube.command()
     async def show(self, ctx, ytchannel_id: str):
@@ -445,12 +461,24 @@ class Youtube(commands.Cog, name="Youtube"):
     @youtube.command()
     async def enable_goal_notify(self, ctx, ytchannel_id: str):
         # this will enable the goal notification for the yt channel
-        pass
+        if not is_string(ytchannel_id):
+            return
+
+        s = self.db.Session()
+        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_goals", 1)
+
+        s.close()
 
     @youtube.command()
     async def disable_goal_notify(self, ctx, ytchannel_id: str):
         # this will disable the goal notification for the yt channel
-        pass
+        if not is_string(ytchannel_id):
+            return
+
+        s = self.db.Session()
+        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_goals", 0)
+
+        s.close()
 
     # @youtube.command()
     # async def enable_stream_notify(self, ctx, ytchannel_id: str):
@@ -475,16 +503,28 @@ class Youtube(commands.Cog, name="Youtube"):
     @youtube.command()
     async def enable_upload_notify(self, ctx, ytchannel_id: str):
         # this will enable the upload notification for the yt channel
-        pass
+        if not is_string(ytchannel_id):
+            return
+
+        s = self.db.Session()
+        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_video", 1)
+
+        s.close()
 
     @youtube.command()
     async def disable_upload_notify(self, ctx, ytchannel_id: str):
         # this will disable the upload notification for the yt channel
-        pass
+        if not is_string(ytchannel_id):
+            return
 
-    # add staticmethod when channel on following list
-    # ...
+        s = self.db.Session()
+        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_video", 0)
 
+        s.close()
+
+    # PRIVATE HELPER FUNCTIONS
+    # ---
+    #
     def _get_yt_id(self, s, ytchannel_id):
         # this will return a yt_id of a youtubechannel if existing in
         # our database
@@ -529,6 +569,31 @@ class Youtube(commands.Cog, name="Youtube"):
                 )
             ).scalar():
                 return True
+        except Exception as e:
+            logging.error(
+                f"error in _exists_ytfollow: {e}"
+            )
+            return False
+
+    def _switch_ytmod(self, s, guild_id, ytchannel_id, mod, value):
+        # this will switch a youtube module on a specific channel on/off
+        # based on guild_id
+        # ---
+        #
+        try:
+
+            # get yt_id
+            yt_id = self._get_yt_id(s, ytchannel_id)
+
+            s.query(models.YoutubeFollow) \
+                .filter(
+                    models.YoutubeFollow.youtube_id == yt_id,
+                    models.YoutubeFollow.guild_id == guild_id
+                ) \
+                .update({
+                    getattr(models.Youtube, mod): value
+                })
+
         except Exception as e:
             logging.error(
                 f"error in _exists_ytfollow: {e}"
