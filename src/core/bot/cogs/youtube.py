@@ -7,6 +7,13 @@ from sqlalchemy import exists, and_
 from helpers import is_string
 
 
+def ytmodf(intvalue):
+    if intvalue == 0:
+        return "[OFF]"
+    else:
+        return "ON"
+
+
 class Youtube(commands.Cog, name="Youtube"):
     def __init__(self, bot):
         self.bot = bot
@@ -307,9 +314,46 @@ class Youtube(commands.Cog, name="Youtube"):
     @commands.has_permissions(administrator=True)
     @commands.group()
     async def youtube(self, ctx):
-        if ctx.invoked_subcommand is None:
-            # await ctx.send("No subcommand posted")
-            pass
+        if ctx.invoked_subcommand is not None:
+            return
+
+        try:
+            s = self.db.Session()
+
+            msg = "This is a list of all configured"
+            msg += "YouTube Channels you're following.\n"
+            msg += "for more details check the help.\n\n"
+            msg += "```css\n"
+            msg += "/* Syntax= .channel_id : (notify_videos),"
+            msg += " (notify_goals) */\n\n"
+
+            # get all youtube channels
+            for result in s.query(
+                    models.Youtube,
+                    models.YoutubeFollow
+                ) \
+                .filter(
+                    models.YoutubeFollow.guild_id ==
+                    ctx.guild.id,
+                    models.YoutubeFollow.youtube_id ==
+                    models.Youtube.id
+                    ).all():
+
+                msg += f".{result.Youtube.ytchannel_id} : "
+                msg += f"{ytmodf(result.YoutubeFollow.monitor_videos)}"
+                msg += f", {ytmodf(result.YoutubeFollow.monitor_goals)}"
+                msg += "\n"
+
+            msg += "```"
+
+            await ctx.send(msg)
+
+        except Exception as e:
+            logging.error(
+                f"Error in youtube command: {e}"
+            )
+            s.rollback()
+            s.close()
 
     @youtube.command()
     async def add(self, ctx, ytchannel_id: str):
@@ -321,7 +365,7 @@ class Youtube(commands.Cog, name="Youtube"):
             s = self.db.Session()
 
             # check if channel is already existing in database
-            v
+            yt_id = self._get_yt_id(s, ytchannel_id)
 
             if yt_id is not None:
                 # channel is existing, check if channel is on followlist
@@ -465,7 +509,19 @@ class Youtube(commands.Cog, name="Youtube"):
             return
 
         s = self.db.Session()
-        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_goals", 1)
+        self._switch_ytmod(
+            s,
+            ctx.guild.id,
+            ytchannel_id,
+            "monitor_goals",
+            1
+        )
+
+        s.commit()
+
+        await ctx.send(
+            "Goal Notifications enabled for channel."
+        )
 
         s.close()
 
@@ -476,7 +532,19 @@ class Youtube(commands.Cog, name="Youtube"):
             return
 
         s = self.db.Session()
-        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_goals", 0)
+        self._switch_ytmod(
+            s,
+            ctx.guild.id,
+            ytchannel_id,
+            "monitor_goals",
+            0
+        )
+
+        s.commit()
+
+        await ctx.send(
+            "Goal Notifications disabled for channel."
+        )
 
         s.close()
 
@@ -507,7 +575,19 @@ class Youtube(commands.Cog, name="Youtube"):
             return
 
         s = self.db.Session()
-        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_video", 1)
+        self._switch_ytmod(
+            s,
+            ctx.guild.id,
+            ytchannel_id,
+            "monitor_videos",
+            1
+        )
+
+        s.commit()
+
+        await ctx.send(
+            "Upload Notifications enabled for channel."
+        )
 
         s.close()
 
@@ -518,7 +598,19 @@ class Youtube(commands.Cog, name="Youtube"):
             return
 
         s = self.db.Session()
-        self._switch_ytmod(s, ctx.guild_id, ytchannel_id, "monitor_video", 0)
+        self._switch_ytmod(
+            s,
+            ctx.guild.id,
+            ytchannel_id,
+            "monitor_videos",
+            0
+        )
+
+        s.commit()
+
+        await ctx.send(
+            "Upload Notifications disabled for channel."
+        )
 
         s.close()
 
@@ -591,7 +683,7 @@ class Youtube(commands.Cog, name="Youtube"):
                     models.YoutubeFollow.guild_id == guild_id
                 ) \
                 .update({
-                    getattr(models.Youtube, mod): value
+                    getattr(models.YoutubeFollow, mod): value
                 })
 
         except Exception as e:
