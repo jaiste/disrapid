@@ -21,6 +21,7 @@ class YouTubeHelper():
             response = self._api.activities().list(
                 part='snippet,contentDetails',
                 channelId=ytchannel_id,
+                uploadType="upload"
             ).execute()
 
             if 'error' in response:
@@ -74,14 +75,26 @@ class YouTubeHelper():
     def _serialize_activity(item):
         # serialize yt api response to an obj
         try:
+            logging.debug(
+                f"_serialize_activity: item={item}"
+            )
+
             cd = item["contentDetails"]
             snip = item["snippet"]
+
+            logging.debug(
+                f"_serialize_activity: cd={cd}, snip={snip}"
+            )
 
             ytchannel = YouTubeActivity(
                 id=cd["upload"]["videoId"],
                 type=snip["type"],
                 title=snip["title"],
                 description=snip["description"],
+            )
+
+            logging.debug(
+                f"_serialize_activity: ytchannel={ytchannel}"
             )
 
             return ytchannel

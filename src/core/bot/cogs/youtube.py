@@ -5,6 +5,12 @@ import random
 import models
 from sqlalchemy import exists, and_
 from helpers import is_string
+import os
+
+if 'DEBUG' in os.environ:
+    TASK_LOOP_TIME = 0.3
+else:
+    TASK_LOOP_TIME = 5
 
 
 def ytmodf(intvalue):
@@ -21,7 +27,7 @@ class Youtube(commands.Cog, name="Youtube"):
         self.notify_yt_goals.start()
         self.notify_yt_act.start()
 
-    @tasks.loop(minutes=0.3)
+    @tasks.loop(minutes=TASK_LOOP_TIME)
     async def notify_yt_goals(self):
         # this will check all followed yt channels and check if a goal
         # was reached ->
@@ -182,7 +188,7 @@ class Youtube(commands.Cog, name="Youtube"):
     async def before_yt_goals(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=0.3)
+    @tasks.loop(minutes=TASK_LOOP_TIME)
     async def notify_yt_act(self):
         # this will notify about new activites on a yt channel
         # ->
