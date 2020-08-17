@@ -86,7 +86,7 @@ CREATE TABLE `guilds_youtubefollow` (
     ON UPDATE RESTRICT);
 
 CREATE TABLE `youtube_activities` (
-  `id` VARCHAR(32) NOT NULL,
+  `id` VARCHAR(36) NOT NULL,
   `youtube_id` BIGINT(32) NOT NULL,
   `last_sequence` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`),
@@ -163,3 +163,17 @@ VALUES
 ('80000000', '80000000', '89999999', 'Congratz $channelname, has just reached 80M subscribers! Keep going!'),
 ('90000000', '90000000', '99999999', 'Congratz $channelname, has just reached 90M subscribers! Keep going!'),
 ('100000000', '100000000', '199999999', 'Congratz $channelname, has just reached 100M subscribers! Did you every see that?');
+
+
+CREATE TABLE `guilds_reactionroles` (
+  `id` BIGINT(32) NOT NULL AUTO_INCREMENT,
+  `guild_id` BIGINT(32) NOT NULL,
+  `role_id` BIGINT(32) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_reactionroles_guild_id_idx` (`guild_id` ASC) VISIBLE,
+  CONSTRAINT `fk_reactionroles_guild_id`
+    FOREIGN KEY (`guild_id`)
+    REFERENCES `guilds` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE RESTRICT);

@@ -1,4 +1,5 @@
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 import logging
 import re
 
@@ -11,10 +12,103 @@ def is_string(inputstring):
     return bool(re.match("^[A-z0-9]*$", inputstring))
 
 
+def is_extended_string(inputstring):
+    return bool(re.match("^[A-z0-9 .,\n&:'`´%$!;:-_]+", inputstring))
+
+
+def is_role(inputstring):
+    return bool(re.match("<@&([0-9])*>", inputstring))
+
+
+def get_role_id_from_string(inputstring):
+    tmp = inputstring[3:]
+    tmp2 = tmp[:-1]
+    return tmp2
+
+
+def modu(intvalue):
+    if intvalue == 0:
+        return "[OFF]"
+    else:
+        return "ON"
+
+
 class YouTubeHelper():
     def __init__(self, developer_key):
         self._developer_key = developer_key
         self._api = build('youtube', 'v3', developerKey=self._developer_key)
+
+    def get_activities(self, ytchannel_id):
+        # this returns all activity ids with quota cost 1
+        try:
+            r = self._api.activities().list(
+                part='id',
+                channelId=ytchannel_id
+            ).execute()
+
+            if r['items'] == []:
+                return None
+
+            items = []
+
+            for item in r['items']:
+                items.append(
+                    item['id']
+                )
+
+            return items
+
+        except HttpError as e:
+            logging.error(
+                "YouTubeHelper:get_activities: " +
+                f"HttpError={e}"
+            )
+            return None
+        except Exception as e:
+            logging.error(
+                "YouTubeHelper:get_activities: " +
+                f"Exception={e}"
+            )
+            return None
+
+    def get_activities_detailed(self, ytchannel_id):
+        # this returns all activity ids with quota cost 3
+        try:
+            r = self._api.activities().list(
+                part='id,contentDetails',
+                channelId=ytchannel_id
+            ).execute()
+
+            if r['items'] == []:
+                return None
+
+            items = []
+
+            for item in r['items']:
+                if 'upload' in item['contentDetails']:
+                    items.append(
+                        {
+                            "id": item['contentDetails']['upload']['videoId'],
+                            "type": "upload",
+                            "url": "https://youtu.be/" +
+                            item['contentDetails']['upload']['videoId']
+                        }
+                    )
+
+            return items
+
+        except HttpError as e:
+            logging.error(
+                "YouTubeHelper:get_activities_detailed: " +
+                f"HttpError={e}"
+            )
+            return None
+        except Exception as e:
+            logging.error(
+                "YouTubeHelper:get_activities_detailed: " +
+                f"Exception={e}"
+            )
+            return None
 
     def get_latest_activities(self, ytchannel_id):
         try:
