@@ -149,6 +149,16 @@ class Sync(commands.Cog, name="Sync Function"):
             session.delete(db_role)
             session.commit()
 
+            # delete all reaction roles
+            obj = session.query(
+                models.Reactionrole
+            ).filter(
+                models.Reactionrole.role_id == role.id
+            )
+
+            obj.delete()
+            session.commit()
+
         except Exception as e:
             logging.error(e)
 

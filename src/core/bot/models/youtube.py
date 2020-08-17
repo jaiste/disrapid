@@ -30,7 +30,7 @@ class Youtube(Base):
 class Activity(Base):
     __tablename__ = 'youtube_activities'
 
-    id = Column(String(255), primary_key=True)
+    id = Column(String(36), primary_key=True)
     youtube_id = Column(BigInteger, ForeignKey('youtube.id'))
     last_sequence = Column(String(255))
 

@@ -34,23 +34,6 @@ class Guild(Base):
     youtubes = relationship("Youtube", secondary='guilds_youtubefollow')
 
 
-class Welcomemessage(Base):
-    __tablename__ = 'guilds_welcomemessage'
-
-    id = Column(Integer, primary_key=True)
-    guild_id = Column(Integer, ForeignKey('guilds.id'))
-    text = Column(String(2000))
-    enable = Column(Integer)
-    channel_id = Column(
-        Integer,
-        ForeignKey('guilds_channels.id'),
-        nullable=True
-    )
-
-    guild = relationship("Guild", back_populates="welcomemessage")
-    channel = relationship("Channel")
-
-
 class Channel(Base):
     __tablename__ = 'guilds_channels'
 
@@ -81,3 +64,12 @@ class YoutubeFollow(Base):
     monitor_goals = Column(Integer, default=0)
     monitor_streams = Column(Integer, default=0)
     remind_streams = Column(Integer, default=0)
+
+
+class Reactionrole(Base):
+    __tablename__ = 'guilds_reactionroles'
+
+    id = Column(Integer, primary_key=True)
+    guild_id = Column(Integer, ForeignKey('guilds.id'))
+    role_id = Column(Integer)
+    name = Column(String)

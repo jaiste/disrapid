@@ -212,91 +212,115 @@ class Youtube(commands.Cog, name="Youtube"):
                               "follow, skipping loop")
                 return
 
-            # check all yt channels, if there is a new activity
+            # query all activities for channel
             for ytchannel in ytchannels:
                 # query channel statistics
                 yta = self.bot.youtube \
-                    .get_latest_activities(ytchannel.ytchannel_id)
+                    .get_activities_detailed(ytchannel.ytchannel_id)
 
-                if yta is not False and yta:
+                # if we don't get any activities for any reason,
+                # continue with the next channel ...
+                if yta is None:
+                    logging.error(
+                        "notify_yt_act: " +
+                        f"error for channel-{ytchannel.ytchannel_id}," +
+                        "skipping this channel and move to next"
+                    )
+                    continue
+
+                # check if we have queried this channel before
+                if ytchannel.last_seen is None:
+                    # we didn't query this channel before, insert
+                    # everything in db and do nothing...
                     for a in yta:
-                        # do that for all activities...
-                        if ytchannel.last_seen is None:
-                            # insert activity in database and do nothing...
+                        new_activity = models.Activity(
+                            id=a.get('id'),
+                            youtube_id=ytchannel.id,
+                            last_sequence=seq
+                        )
+                        s.add(new_activity)
+
+                    s.commit()
+
+                else:
+                    # we have queried this channel before, check
+                    # if the activities are in db
+                    for a in yta:
+                        if s.query(
+                            exists()
+                            .where(
+                                models.Activity.id == a.get('id')
+                                )).scalar():
+                            # we have already seen this activity
+                            # update seq id
+                            s.query(models.Activity) \
+                                .filter(
+                                    models.Activity.id == a.get('id')
+                                ) \
+                                .update(
+                                    {models.Activity.last_sequence: seq}
+                                )
+                        else:
+                            # we have not seen this activity
+                            # this is a new activity we need to
+                            # send a notification for...
                             new_activity = models.Activity(
-                                id=a.id,
+                                id=a.get('id'),
                                 youtube_id=ytchannel.id,
                                 last_sequence=seq
                             )
                             s.add(new_activity)
-                        else:
-                            # check if we already have seen this activity
 
-                            if s.query(
-                                exists()
-                                .where(
-                                    models.Activity.id == a.id
-                                )) \
-                                    .scalar():
-                                # we have already seen this activity, update
-                                # sequence id
-                                s.query(models.Activity) \
-                                    .filter(
-                                        models.Activity.id == a.id
+                            # we need to notify all guilds, that are
+                            # following this youtube channel about this
+                            # new activity!
+                            for result in s.query(
+                                        models.Guild,
+                                        models.YoutubeFollow
                                     ) \
-                                    .update(
-                                        {models.Activity.last_sequence: seq}
-                                    )
-                            else:
-                                # this seems to be a new activity,
-                                # execute notification procedure
-                                new_activity = models.Activity(
-                                    id=a.id,
-                                    youtube_id=ytchannel.id,
-                                    last_sequence=seq
-                                )
-                                s.add(new_activity)
-
-                                # we need to notify all guilds, that are
-                                # following this youtube channel about this
-                                # new activity!
-                                for result in s.query(
-                                            models.Guild,
-                                            models.YoutubeFollow
-                                        ) \
-                                    .filter(
-                                        models.YoutubeFollow.guild_id ==
-                                        models.Guild.id,
-                                        models.YoutubeFollow.youtube_id ==
-                                        ytchannel.id,
-                                        models.YoutubeFollow.monitor_videos ==
-                                        1,
-                                        ).all():
-
-                                    # get the channel id where notification
-                                    # should be sent to
-                                    nc = result.Guild.notify_channel_id
-
-                                    if nc is None:
-                                        # if no notification channel is set,
-                                        # send
-                                        # this to the guilds system channel
-                                        c = self.bot.get_guild(
-                                            result.Guild.id
-                                        ).system_channel
-                                    else:
-                                        c = self.bot.get_channel(nc)
-
-                                    await c.send(a.url)
-
-                            # clean up task
-                            s.query(models.Youtube) \
                                 .filter(
-                                    models.Youtube.id == ytchannel.id
-                                ) \
-                                .update({
-                                    models.Youtube.last_seen: datetime.now()
-                                })
+                                    models.YoutubeFollow.guild_id ==
+                                    models.Guild.id,
+                                    models.YoutubeFollow.youtube_id ==
+                                    ytchannel.id,
+                                    models.YoutubeFollow.monitor_videos ==
+                                    1,
+                                    ).all():
+
+                                # get the channel id where notification
+                                # should be sent to
+                                nc = result.Guild.notify_channel_id
+
+                                if nc is None:
+                                    # if no notification channel is set,
+                                    # send
+                                    # this to the guilds system channel
+                                    c = self.bot.get_guild(
+                                        result.Guild.id
+                                    ).system_channel
+                                else:
+                                    c = self.bot.get_channel(nc)
+
+                                await c.send(a.get('url'))
+
+                # clean up task
+                s.query(models.Youtube) \
+                    .filter(
+                        models.Youtube.id == ytchannel.id
+                    ) \
+                    .update({
+                        models.Youtube.last_seen: datetime.now()
+                    })
+       
+                s.commit()
+
+            # clean up orphaned entires
+            oe = s.query(
+                models.Activity
+            ).filter(
+                models.Activity.last_sequence != seq
+            )
+            oe.delete()
 
             s.commit()
             s.close()
@@ -354,6 +378,8 @@ class Youtube(commands.Cog, name="Youtube"):
 
             await ctx.send(msg)
 
+            s.close()
+            
         except Exception as e:
             logging.error(
                 f"Error in youtube command: {e}"
