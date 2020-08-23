@@ -4,7 +4,13 @@ from datetime import datetime
 import random
 import models
 from sqlalchemy import exists, and_
-from helpers import is_string
+from helpers import (
+    is_string,
+    is_role,
+    get_role_id_from_string,
+    is_channel,
+    get_channel_id_from_string,
+)
 import os
 
 if 'DEBUG' in os.environ:
@@ -41,6 +47,7 @@ class Youtube(commands.Cog, name="Youtube"):
             logging.debug(f"starting new sequence notify_yt_goals-{seq}")
 
             s = self.db.Session()
+
             ytchannels = s.query(models.Youtube) \
                 .filter(models.Youtube.valid == 1).all()
 
@@ -139,13 +146,26 @@ class Youtube(commands.Cog, name="Youtube"):
                             else:
                                 c = self.bot.get_channel(nc)
 
+                            # get the role id that should be notified
+                            if result.Guild.notify_role_id is not None:
+                                role = self.bot.get_guild(
+                                    result.Guild.id
+                                ).get_role(
+                                    result.Guild.notify_role_id
+                                )
+                            else:
+                                role = None
+
                             # replace $channelname by real channelname
                             if goalval.text is not None:
                                 msg = goalval.text.replace(
                                     "$channelname",
                                     ytc.title,
                                 )
-                                msg += "\nCheckout this channel:"
+                                if role is not None:
+                                    msg += role.mention
+
+                                msg += "Checkout this channel:"
                                 msg += f" {ytc.url}"
 
                                 # send a notification to the channel
@@ -311,7 +331,7 @@ class Youtube(commands.Cog, name="Youtube"):
                     .update({
                         models.Youtube.last_seen: datetime.now()
                     })
-       
+
                 s.commit()
 
             # clean up orphaned entires
@@ -350,9 +370,28 @@ class Youtube(commands.Cog, name="Youtube"):
         try:
             s = self.db.Session()
 
-            msg = "This is a list of all configured"
-            msg += "YouTube Channels you're following.\n"
-            msg += "for more details check the help.\n\n"
+            # ytchannels = []
+
+            db_guild = s.query(models.Guild).get(ctx.guild.id)
+
+            role = ctx.guild.get_role(db_guild.notify_role_id)
+            channel = ctx.guild.get_channel(db_guild.notify_channel_id)
+
+            if role is not None:
+                role = role.mention
+            else:
+                "*None*"
+
+            if channel is not None:
+                channel = channel.mention
+            else:
+                "*None*"
+
+            msg = "**YouTube Settings**\n---\n\n" \
+                f"Notifications Channel: {channel}\n" \
+                f"Notifications Role: {role}\n\n"
+
+            msg += "Following List:\n---\n"
             msg += "```css\n"
             msg += "/* Syntax= .channel_id : (notify_videos),"
             msg += " (notify_goals) */\n\n"
@@ -379,7 +418,7 @@ class Youtube(commands.Cog, name="Youtube"):
             await ctx.send(msg)
 
             s.close()
-            
+
         except Exception as e:
             logging.error(
                 f"Error in youtube command: {e}"
@@ -524,10 +563,10 @@ class Youtube(commands.Cog, name="Youtube"):
             s.rollback()
             s.close()
 
-    @youtube.command()
-    async def show(self, ctx, ytchannel_id: str):
+    # @youtube.command()
+    # async def show(self, ctx, ytchannel_id: str):
         # this will print the current channel configuration
-        pass
+        # pass
 
         # check if channel id is on followinglist
         #   yes:
@@ -645,6 +684,121 @@ class Youtube(commands.Cog, name="Youtube"):
         )
 
         s.close()
+
+    @youtube.command()
+    async def notify_role(self, ctx, role: str):
+        # this will change the notification role
+        try:
+            s = self.db.Session()
+
+            # check if user want's to remove the role
+            if role.lower() == "none":
+                s.query(models.Guild) \
+                    .filter(
+                        models.Guild.id == ctx.guild.id
+                    ) \
+                    .update({
+                        models.Guild.notify_role_id: None
+                    })
+                s.commit()
+                s.close()
+                return
+
+            if not is_role(role):
+                await ctx.send(
+                    "this is not a valid role argument, please use the @ "
+                    "character to directly tag a discord role object..."
+                )
+                s.close()
+                return
+
+            # extract role id
+            role_id = get_role_id_from_string(role)
+
+            # skip if this role is not existing on the server
+            if ctx.guild.get_role(int(role_id)) is None:
+                await ctx.send(
+                    "role is not existing on guild..."
+                )
+                s.close()
+                return
+
+            # update the db entry
+            s.query(models.Guild) \
+                .filter(
+                    models.Guild.id == ctx.guild.id
+                ) \
+                .update({
+                     models.Guild.notify_role_id: role_id
+                })
+            s.commit()
+
+            await ctx.channel.send(
+                "notification role was updated..."
+            )
+
+        except Exception as e:
+            logging.error(
+                f"Error in youtube notify role command: {e}"
+            )
+            s.close()
+
+    @youtube.command()
+    async def notify_channel(self, ctx, channel: str):
+        # this will change the notification role
+        try:
+            s = self.db.Session()
+
+            # check if user want's to remove the role
+            if channel.lower() == "none":
+                s.query(models.Guild) \
+                    .filter(
+                        models.Guild.id == ctx.guild.id
+                    ) \
+                    .update({
+                        models.Guild.notify_channel_id: None
+                    })
+                s.commit()
+                s.close()
+                return
+
+            if not is_channel(channel):
+                await ctx.send(
+                    "this is not a valid channel argument, please use the # "
+                    "character to directly tag a discord channel object..."
+                )
+                s.close()
+                return
+
+            channel_id = get_channel_id_from_string(channel)  # extract id
+
+            # error if channel is not existing on guild
+            if ctx.guild.get_channel(int(channel_id)) is None:
+                await ctx.send(
+                    "channel is not existing on guild..."
+                )
+                s.close()
+                return
+
+            # update the db entry
+            s.query(models.Guild) \
+                .filter(
+                    models.Guild.id == ctx.guild.id
+                ) \
+                .update({
+                     models.Guild.notify_channel_id: channel_id
+                })
+            s.commit()
+
+            await ctx.channel.send(
+                "notification channel was updated..."
+            )
+
+        except Exception as e:
+            logging.error(
+                f"Error in youtube notify role command: {e}"
+            )
+            # s.close()
 
     # PRIVATE HELPER FUNCTIONS
     # ---

@@ -20,6 +20,7 @@ class Guild(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     notify_channel_id = Column(Integer, nullable=True)
+    notify_role_id = Column(Integer, nullable=True)
 
     welcomemessage = relationship("Welcomemessage",
                                   uselist=False,

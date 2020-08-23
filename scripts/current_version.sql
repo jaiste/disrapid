@@ -10,6 +10,7 @@ CREATE TABLE `guilds` (
   `id` BIGINT(32) NOT NULL,
   `name` VARCHAR(255) NOT NULL,
   `notify_channel_id` BIGINT(32) NULL,
+  `notify_role_id` BIGINT(32) NULL,
   PRIMARY KEY (`id`));
 
 CREATE TABLE `guilds_channels` (

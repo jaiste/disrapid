@@ -20,8 +20,18 @@ def is_role(inputstring):
     return bool(re.match("<@&([0-9])*>", inputstring))
 
 
+def is_channel(inputstring):
+    return bool(re.match("<#([0-9])*>", inputstring))
+
+
 def get_role_id_from_string(inputstring):
     tmp = inputstring[3:]
+    tmp2 = tmp[:-1]
+    return tmp2
+
+
+def get_channel_id_from_string(inputstring):
+    tmp = inputstring[2:]
     tmp2 = tmp[:-1]
     return tmp2
 
