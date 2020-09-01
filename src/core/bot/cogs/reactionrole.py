@@ -6,6 +6,7 @@ import models
 from sqlalchemy import exists, and_
 from helpers import is_role, is_string, get_role_id_from_string
 # import os
+import emoji  # emoji conversion
 
 
 class Reactionrole(commands.Cog, name="Reactionrole"):
@@ -24,7 +25,7 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
             user = payload.member
             guild = payload.member.guild
-            role_n = payload.emoji.name
+            role_n = emoji.demojize(payload.emoji.name)
 
             # check if bot is the message owner or the reaction initiator
             # this is needed because we don't want to react the bot to other
@@ -48,12 +49,11 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
                 # assign role to user
                 await user.add_roles(user.guild.get_role(int(role_id)))
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in reactionrole event: {e}"
             )
+        finally:
             s.close()
 
     @commands.Cog.listener()
@@ -90,12 +90,11 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
                 # assign role to user
                 await user.remove_roles(user.guild.get_role(int(role_id)))
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in reactionrole event: {e}"
             )
+        finally:
             s.close()
 
     # ADMIN CONFIG COMMANDS
@@ -133,12 +132,11 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
             await ctx.send(msg)
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in reactionrole command: {e}"
             )
+        finally:
             s.close()
 
     @reactionrole.command()
@@ -160,31 +158,29 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
                     ).all():
 
                 # get the emoji object of the reaction
-                for emoji in ctx.guild.emojis:
-                    if result.name == emoji.name:
-                        await message.add_reaction(emoji)
+                for e in ctx.guild.emojis:
+                    if result.name == e.name:
+                        await message.add_reaction(e)
                         break
                 else:
                     # no emoji found for this command...
                     logging.error(f"emoji not found for result-{result.name}")
                     continue
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in reactionrole command: {e}"
             )
+        finally:
             s.close()
 
     @reactionrole.command()
     async def add(self, ctx, msg: str, role: str):
-
         try:
+            s = self.db.Session()
+
             if not is_string(msg):
                 return
-
-            s = self.db.Session()
 
             if is_role(role):
                 # extract role id
@@ -192,17 +188,14 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
                 # skip if this role is not existing on the server
                 if ctx.guild.get_role(int(role_id)) is None:
-                    s.close()
                     return
 
             else:
-                s.close()
                 return
 
             # check if this is already existing in database
             if self._exists_reactionrole(s, msg, ctx.guild.id):
                 await ctx.channel.send("Reactionrole is already existing.")
-                s.close()
                 return
 
             # reactionrole is not existing, add to list
@@ -216,22 +209,21 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
             await ctx.channel.send("Reactionrole was added to list")
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in reactionrole command: {e}"
             )
+            s.rollback()
+        finally:
             s.close()
 
     @reactionrole.command()
     async def rm(self, ctx, msg: str, role: str):
-
         try:
+            s = self.db.Session()
+            
             if not is_string(msg):
                 return
-
-            s = self.db.Session()
 
             if is_role(role):
                 # extract role id
@@ -239,11 +231,9 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
                 # skip if this role is not existing on the server
                 if ctx.guild.get_role(int(role_id)) is None:
-                    s.close()
                     return
 
             else:
-                s.close()
                 return
 
             # check if this is already existing in database
@@ -257,7 +247,6 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
                     models.Reactionrole.role_id == role_id
                 )
                 obj.delete()
-
                 s.commit()
 
                 await ctx.channel.send("Reactionrole was deleted from list.")
@@ -265,12 +254,12 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
             else:
                 await ctx.channel.send("Reactionrole is not existing.")
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in reactionrole command: {e}"
             )
+            s.rollback()
+        finally:
             s.close()
 
     def _exists_reactionrole(self, s, name, guild_id):
@@ -278,7 +267,6 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
         # ---
         #
         try:
-
             if s.query(
                 exists().
                 where(

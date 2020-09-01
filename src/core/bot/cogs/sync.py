@@ -32,8 +32,6 @@ class Sync(commands.Cog, name="Sync Function"):
                 # this may take some time on large shards
                 await Sync._full_guild_sync(session, guild)
 
-            session.close()
-
             # bot is done with sync
             await self.bot.change_presence(
                 activity=discord.Game(
@@ -43,6 +41,8 @@ class Sync(commands.Cog, name="Sync Function"):
 
         except Exception as e:
             logging.error(f"couldn't perform full sync check reason: {e}")
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -56,6 +56,8 @@ class Sync(commands.Cog, name="Sync Function"):
             session.close()
         except Exception as e:
             logging.error(f"couldn't perform add guild check reason: {e}")
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
@@ -72,6 +74,8 @@ class Sync(commands.Cog, name="Sync Function"):
 
         except Exception as e:
             logging.error(f"couldn't perform del guild check reason: {e}")
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel):
@@ -89,6 +93,8 @@ class Sync(commands.Cog, name="Sync Function"):
 
         except Exception as e:
             logging.error(e)
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel):
@@ -102,6 +108,8 @@ class Sync(commands.Cog, name="Sync Function"):
 
         except Exception as e:
             logging.error(e)
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_channel_update(self, old_channel, new_channel):
@@ -122,6 +130,8 @@ class Sync(commands.Cog, name="Sync Function"):
         except Exception as e:
             session.rollback()
             logging.error(e)
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_role_create(self, role):
@@ -138,6 +148,8 @@ class Sync(commands.Cog, name="Sync Function"):
 
         except Exception as e:
             logging.error(e)
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role):
@@ -161,6 +173,8 @@ class Sync(commands.Cog, name="Sync Function"):
 
         except Exception as e:
             logging.error(e)
+        finally:
+            session.close()
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, old_role, new_role):
@@ -181,6 +195,8 @@ class Sync(commands.Cog, name="Sync Function"):
         except Exception as e:
             session.rollback()
             logging.error(e)
+        finally:
+            session.close()
 
     # SYNC UTILITY FUNCTIONS
     # ---
@@ -223,6 +239,8 @@ class Sync(commands.Cog, name="Sync Function"):
         except Exception as e:
             logging.error(e)
             await member.send("an error occurred, please contact support")
+        finally:
+            session.close()
 
     # CLASS STATIC METHODS
     # ---
@@ -287,10 +305,12 @@ class Sync(commands.Cog, name="Sync Function"):
                     session.add(new_role)
 
             session.commit()
-            session.close()
+
         except Exception as e:
             session.rollback()
             logging.error(e)
+        finally:
+            session.close()
 
     @staticmethod
     async def _full_guild_add(session, guild):
@@ -324,10 +344,12 @@ class Sync(commands.Cog, name="Sync Function"):
                 session.add(new_role)
 
             session.commit()
-            session.close()
+
         except Exception as e:
             session.rollback()
             logging.error(e)
+        finally:
+            session.close()
 
 
 def setup(bot):

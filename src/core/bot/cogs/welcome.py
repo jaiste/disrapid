@@ -43,12 +43,11 @@ class Welcome(commands.Cog, name="Welcome"):
 
             await member.send(msg.text)
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in welcome event: {e}"
             )
+        finally:
             s.close()
 
     # ADMIN CONFIG COMMANDS
@@ -85,12 +84,11 @@ class Welcome(commands.Cog, name="Welcome"):
 
             await ctx.send(msg)
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in welcome command: {e}"
             )
+        finally:
             s.close()
 
     @welcome.command()
@@ -136,13 +134,12 @@ class Welcome(commands.Cog, name="Welcome"):
                     "Welcomemessage was updated correctly."
                 )
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in youtube.add command: {e}"
             )
             s.rollback()
+        finally:
             s.close()
 
     @welcome.command()
@@ -174,13 +171,12 @@ class Welcome(commands.Cog, name="Welcome"):
                 "Welcomemessage was enabled."
             )
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in youtube.add command: {e}"
             )
             s.rollback()
+        finally:
             s.close()
 
     @welcome.command()
@@ -212,13 +208,12 @@ class Welcome(commands.Cog, name="Welcome"):
                 "Welcomemessage was disabled."
             )
 
-            s.close()
-
         except Exception as e:
             logging.error(
                 f"Error in youtube.add command: {e}"
             )
             s.rollback()
+        finally:
             s.close()
 
     def _welcome_exists(self, s, guild_id):
