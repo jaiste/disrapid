@@ -14,7 +14,6 @@ services:
             - DB_NAME=${DB_NAME}
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
-            - DEBUG=true
             - YOUTUBE_DEVELOPER_KEY=${YOUTUBE_DEVELOPER_KEY}
         links:
             - database
