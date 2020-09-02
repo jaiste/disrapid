@@ -51,7 +51,7 @@ class Sync(commands.Cog, name="Sync Function"):
         try:
             session = self.db.Session()
 
-            self._full_guild_add(session, guild)
+            await self._full_guild_add(session, guild)
 
             session.close()
         except Exception as e:
@@ -246,7 +246,7 @@ class Sync(commands.Cog, name="Sync Function"):
     # ---
     #
     @staticmethod
-    def _full_guild_sync(session, guild):
+    async def _full_guild_sync(session, guild):
         # sync guild to database
         try:
             if session.query(exists()
@@ -313,7 +313,7 @@ class Sync(commands.Cog, name="Sync Function"):
             session.close()
 
     @staticmethod
-    def _full_guild_add(session, guild):
+    async def _full_guild_add(session, guild):
         # add guild to database
         try:
             new_guild = models.Guild(
