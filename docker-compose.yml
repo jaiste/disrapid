@@ -29,6 +29,7 @@ services:
             - MYSQL_PASSWORD=${DB_PASS}
         volumes:
             - db_vol:/var/lib/mysql
+            - ./config/database:/etc/mysql/conf.d
 
 volumes:
     db_vol:
