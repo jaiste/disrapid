@@ -17,6 +17,8 @@ services:
             - YOUTUBE_DEVELOPER_KEY=${YOUTUBE_DEVELOPER_KEY}
         links:
             - database
+        volumes:
+            - ./config/core/:/app/config
 
     database:
         image: mysql:5.7
