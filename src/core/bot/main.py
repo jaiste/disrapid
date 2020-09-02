@@ -7,6 +7,9 @@ import os
 import sys
 import ptvsd
 import logging
+import logging.config
+from bot import Disrapid, DisrapidConfig
+
 
 try:
     # check if we should run disrapid in debug mode
@@ -15,20 +18,10 @@ try:
         ptvsd.enable_attach(address=('0.0.0.0', 5050))
         # in debug mode we need to wait for debugger to connect
         ptvsd.wait_for_attach()
-        logging.basicConfig(level=logging.DEBUG)
-        # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
-    else:
-        # debug mode is not enabled, running in production mode...
-        pass
 
-except Exception:
-    # any error will stop the container
-    sys.exit(1)
+    logging.config.fileConfig('config/log.conf')
+    logger = logging.getLogger()
 
-# import all functional libaries
-from bot import Disrapid, DisrapidConfig
-
-try:
     # if no discord token was provided we can't run the bot
     if 'DISCORD_TOKEN' not in os.environ:
         raise Exception("no token provided, exiting...")
@@ -63,7 +56,7 @@ if __name__ == "__main__":
     client.load_extension("cogs.sync")
     client.load_extension("cogs.welcome")
     client.load_extension("cogs.reactionrole")
-    
+
     if config.youtube is True:
         client.load_extension("cogs.youtube")
 

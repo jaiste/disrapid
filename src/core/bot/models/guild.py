@@ -1,4 +1,12 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Enum
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    ForeignKey,
+    Enum,
+    BigInteger,
+    Boolean
+)
 from sqlalchemy.orm import relationship
 from . import Base
 import enum
@@ -17,10 +25,10 @@ class ChannelTypes(enum.Enum):
 class Guild(Base):
     __tablename__ = 'guilds'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    notify_channel_id = Column(Integer, nullable=True)
-    notify_role_id = Column(Integer, nullable=True)
+    id = Column(BigInteger, primary_key=True)
+    name = Column(String(255))
+    notify_channel_id = Column(BigInteger, nullable=True)
+    notify_role_id = Column(BigInteger, nullable=True)
 
     welcomemessage = relationship("Welcomemessage",
                                   uselist=False,
@@ -38,9 +46,9 @@ class Guild(Base):
 class Channel(Base):
     __tablename__ = 'guilds_channels'
 
-    id = Column(Integer, primary_key=True)
-    guild_id = Column(Integer, ForeignKey('guilds.id'))
-    name = Column(String)
+    id = Column(BigInteger, primary_key=True)
+    guild_id = Column(BigInteger, ForeignKey('guilds.id'))
+    name = Column(String(255))
     channeltype = Column(Enum(ChannelTypes))
 
     guild = relationship("Guild", back_populates="channels")
@@ -49,9 +57,9 @@ class Channel(Base):
 class Role(Base):
     __tablename__ = 'guilds_roles'
 
-    id = Column(Integer, primary_key=True)
-    guild_id = Column(Integer, ForeignKey('guilds.id'))
-    name = Column(String)
+    id = Column(BigInteger, primary_key=True)
+    guild_id = Column(BigInteger, ForeignKey('guilds.id'))
+    name = Column(String(255))
 
     guild = relationship("Guild", back_populates="roles")
 
@@ -59,18 +67,19 @@ class Role(Base):
 class YoutubeFollow(Base):
     __tablename__ = 'guilds_youtubefollow'
 
-    guild_id = Column(Integer, ForeignKey('guilds.id'), primary_key=True)
-    youtube_id = Column(Integer, ForeignKey('youtube.id'), primary_key=True)
-    monitor_videos = Column(Integer, default=0)
-    monitor_goals = Column(Integer, default=0)
-    monitor_streams = Column(Integer, default=0)
-    remind_streams = Column(Integer, default=0)
+    id = Column(BigInteger, primary_key=True)
+    guild_id = Column(BigInteger, ForeignKey('guilds.id'))
+    youtube_id = Column(BigInteger, ForeignKey('youtube.id'))
+    monitor_videos = Column(Boolean)
+    monitor_goals = Column(Boolean)
+    monitor_streams = Column(Boolean)
+    remind_streams = Column(Boolean)
 
 
 class Reactionrole(Base):
     __tablename__ = 'guilds_reactionroles'
 
     id = Column(Integer, primary_key=True)
-    guild_id = Column(Integer, ForeignKey('guilds.id'))
-    role_id = Column(Integer)
-    name = Column(String)
+    guild_id = Column(BigInteger, ForeignKey('guilds.id'))
+    role_id = Column(BigInteger)
+    name = Column(String(255))

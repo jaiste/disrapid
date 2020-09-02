@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Boolean
+from sqlalchemy import Column, String, ForeignKey, Boolean, BigInteger
 from sqlalchemy.orm import relationship
 from . import Base
 
@@ -6,12 +6,11 @@ from . import Base
 class Welcomemessage(Base):
     __tablename__ = 'guilds_welcomemessage'
 
-    id = Column(Integer, primary_key=True)
-    guild_id = Column(Integer, ForeignKey('guilds.id'))
+    guild_id = Column(BigInteger, ForeignKey('guilds.id'), primary_key=True)
     text = Column(String(2000))
     enable = Column(Boolean)
     channel_id = Column(
-        Integer,
+        BigInteger,
         ForeignKey('guilds_channels.id'),
         nullable=True
     )

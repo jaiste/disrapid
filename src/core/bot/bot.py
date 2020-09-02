@@ -2,8 +2,9 @@ from discord.ext import commands
 import sys
 import logging
 from interface import DisrapidDb
-import models
 from helpers import YouTubeHelper
+from pythonjsonlogger import jsonlogger
+from datetime import datetime
 
 ADMINISTRATOR = 0x00000008
 
@@ -19,42 +20,12 @@ class Disrapid(commands.Bot):
                                  passwd=self.config.db_pass,
                                  name=self.config.db_name)
 
-            if not self.db.engine.dialect.has_table(self.db.engine, "schema"):
-                raise Exception("database schema is not existing!")
-
-            if self._db_sanity_check(self.config.schema_version) is not True:
-                # db santiy check failed, need to repair database
-                raise Exception("database sanity check failed!")
-
             if self.config.youtube:
                 self.youtube = YouTubeHelper(self.config.developer_key)
 
         except Exception as e:
             logging.fatal(e)
             sys.exit(1)
-
-    def _db_sanity_check(self, schema_version):
-        # do db sanity check + update schema when needed
-        try:
-            s = self.db.Session()
-
-            db_schema_version = s.query(models.Schema).one()
-
-            logging.debug(f"db_schema_version={db_schema_version}")
-            if db_schema_version.id < schema_version:
-                # db schema needs to be updated
-                raise Exception("schema needs to be updated first!")
-
-            # check if db is healthy
-            pass
-
-            s.close()
-            return True
-
-        except Exception as e:
-            logging.fatal(f"couldn't perform santiy check reason: {e}")
-            s.close()
-            return False
 
     def load_extension(self, extension):
         # logging override
@@ -74,3 +45,15 @@ class DisrapidConfig:
         self.db_user = kwargs.pop("db_user")
         self.schema_version = kwargs.pop("schema_version")
         self.do_full_sync = False
+
+
+class DisrapidLoggingFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(DisrapidLoggingFormatter, self).add_fields(
+            log_record,
+            record,
+            message_dict
+        )
+        log_record['@timestamp'] = datetime.now().isoformat()
+        log_record['level'] = record.levelname
+        log_record['logger'] = record.name

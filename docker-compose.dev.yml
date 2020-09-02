@@ -21,6 +21,8 @@ services:
             - database:database
         ports:
             - 5050:5050
+        volumes:
+            - ./config/core/:/app/config
 
     database:
         image: mariadb:latest
