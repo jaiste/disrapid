@@ -246,7 +246,7 @@ class Sync(commands.Cog, name="Sync Function"):
     # ---
     #
     @staticmethod
-    async def _full_guild_sync(session, guild):
+    def _full_guild_sync(session, guild):
         # sync guild to database
         try:
             if session.query(exists()
@@ -313,7 +313,7 @@ class Sync(commands.Cog, name="Sync Function"):
             session.close()
 
     @staticmethod
-    async def _full_guild_add(session, guild):
+    def _full_guild_add(session, guild):
         # add guild to database
         try:
             new_guild = models.Guild(
