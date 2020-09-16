@@ -49,6 +49,7 @@ class YouTubeHelper():
         self._api = build('youtube', 'v3', developerKey=self._developer_key)
 
     def get_activities(self, ytchannel_id):
+        # DEPRECATED!!!
         # this returns all activity ids with quota cost 1
         try:
             r = self._api.activities().list(

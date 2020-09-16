@@ -33,6 +33,9 @@ class Youtube(commands.Cog, name="Youtube"):
         self.notify_yt_goals.start()
         self.notify_yt_act.start()
 
+    # MAIN LOOP FUNCTIONS
+    # ---
+    #
     @tasks.loop(minutes=TASK_LOOP_TIME)
     async def notify_yt_goals(self):
         # this will check all followed yt channels and check if a goal
@@ -246,6 +249,16 @@ class Youtube(commands.Cog, name="Youtube"):
                         f"error for channel-{ytchannel.ytchannel_id}," +
                         "skipping this channel and move to next"
                     )
+
+                    # update all activities with seq id + datetime
+                    s.query(models.Activity) \
+                        .filter(
+                            models.Activity.youtube_id == ytchannel.id
+                        ) \
+                        .update({
+                            models.Activity.last_sequence: seq
+                        })
+
                     continue
 
                 # check if we have queried this channel before
