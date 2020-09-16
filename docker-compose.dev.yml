@@ -32,7 +32,7 @@ services:
             - MYSQL_USER=${DB_USER}
             - MYSQL_PASSWORD=${DB_PASS}
         ports:
-            - 32066:3306
+            - 34066:3306
         volumes:
             - db_vol:/var/lib/mysql
             - ./config/database:/etc/mysql/conf.d
