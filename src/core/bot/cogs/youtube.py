@@ -324,6 +324,14 @@ class Youtube(commands.Cog, name="Youtube"):
                                 # should be sent to
                                 nc = result.Guild.notify_channel_id
 
+                                # get the role that should be notified
+                                nr_id = result.Guild.notify_role_id
+                                nr = self.bot.get_guild(
+                                    result.Guild.id
+                                ).get_role(
+                                    nr_id
+                                ).mention
+
                                 if nc is None:
                                     # if no notification channel is set,
                                     # send
@@ -334,7 +342,11 @@ class Youtube(commands.Cog, name="Youtube"):
                                 else:
                                     c = self.bot.get_channel(nc)
 
-                                await c.send(a.get('url'))
+                                # send notification message to channel
+                                await c.send(
+                                    f"Hey {nr}, there is a new youtube video: "
+                                    f"{a.get('url')}"
+                                )
 
                 # clean up task
                 s.query(models.Youtube) \
