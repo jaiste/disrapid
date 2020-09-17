@@ -14,7 +14,7 @@ from helpers import (
 import os
 
 if 'DEBUG' in os.environ:
-    TASK_LOOP_TIME = 0.3
+    TASK_LOOP_TIME = 5
 else:
     TASK_LOOP_TIME = 5
 

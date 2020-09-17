@@ -36,6 +36,10 @@ def get_channel_id_from_string(inputstring):
     return tmp2
 
 
+def is_custom_emoji(inputstring):
+    return bool(re.match("^<:[A-z]*:[0-9]*>$", inputstring))
+
+
 def modu(intvalue):
     if intvalue == 0:
         return "[OFF]"

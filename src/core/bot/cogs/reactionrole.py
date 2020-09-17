@@ -4,9 +4,14 @@ from discord.ext import commands
 # import random
 import models
 from sqlalchemy import exists, and_
-from helpers import is_role, is_string, get_role_id_from_string
+from helpers import (
+    is_role,
+    is_string,
+    get_role_id_from_string
+)
 # import os
 import emoji  # emoji conversion
+import re  # regex
 
 
 class Reactionrole(commands.Cog, name="Reactionrole"):
@@ -19,13 +24,13 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
     #
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        # check if this guild has an active reactionrole message
+        # this happens when a reaction was added to any message
         try:
             s = self.db.Session()
 
             user = payload.member
             guild = payload.member.guild
-            role_n = emoji.demojize(payload.emoji.name)
+            role_n = self._convert_emoji_to_string(payload.emoji.name)
 
             # check if bot is the message owner or the reaction initiator
             # this is needed because we don't want to react the bot to other
@@ -58,7 +63,6 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        # check if this guild has an active reactionrole message
         try:
             s = self.db.Session()
 
@@ -66,7 +70,7 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
             guild_id = payload.guild_id
             guild = self.bot.get_guild(guild_id)
             user = guild.get_member(user_id)
-            role_n = payload.emoji.name
+            role_n = self._convert_emoji_to_string(payload.emoji.name)
 
             # check if bot is the message owner or the reaction initiator
             # this is needed because we don't want to react the bot to other
@@ -179,7 +183,10 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
         try:
             s = self.db.Session()
 
-            if not is_string(msg):
+            # demojize the string
+            role_n = self._convert_emoji_to_string(msg)
+
+            if not is_string(role_n):
                 return
 
             if is_role(role):
@@ -194,14 +201,14 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
                 return
 
             # check if this is already existing in database
-            if self._exists_reactionrole(s, msg, ctx.guild.id):
+            if self._exists_reactionrole(s, role_n, ctx.guild.id):
                 await ctx.channel.send("Reactionrole is already existing.")
                 return
 
             # reactionrole is not existing, add to list
             new_rr = models.Reactionrole(
                 guild_id=ctx.guild.id,
-                name=msg,
+                name=role_n,
                 role_id=role_id
             )
             s.add(new_rr)
@@ -221,8 +228,11 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
     async def rm(self, ctx, msg: str, role: str):
         try:
             s = self.db.Session()
-            
-            if not is_string(msg):
+
+            # demojize the string
+            role_n = self._convert_emoji_to_string(msg)
+
+            if not is_string(role_n):
                 return
 
             if is_role(role):
@@ -237,13 +247,13 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
                 return
 
             # check if this is already existing in database
-            if self._exists_reactionrole(s, msg, ctx.guild.id):
+            if self._exists_reactionrole(s, role_n, ctx.guild.id):
                 # delete reactionrole
                 obj = s.query(
                     models.Reactionrole
                 ).filter(
                     models.Reactionrole.guild_id == ctx.guild.id,
-                    models.Reactionrole.name == msg,
+                    models.Reactionrole.name == role_n,
                     models.Reactionrole.role_id == role_id
                 )
                 obj.delete()
@@ -294,6 +304,19 @@ class Reactionrole(commands.Cog, name="Reactionrole"):
 
             return role_id.role_id
         else:
+            return None
+
+    def _convert_emoji_to_string(self, inputstring):
+        try:
+            emojistr = emoji.demojize(inputstring)
+            string = re.findall("[a-zA-Z_]+", emojistr)
+
+            return string[0]
+
+        except Exception as e:
+            logging.error(
+                f"error in _convert_emoji_to_string: {e}"
+            )
             return None
 
 
