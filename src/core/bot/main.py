@@ -35,13 +35,14 @@ except Exception as e:
 
 if __name__ == "__main__":
 
+    logging.debug(
+        "configuration init..."
+    )
     # start and run our discord client
     config = DisrapidConfig(db_host=os.environ["DB_HOST"],
                             db_user=os.environ["DB_USER"],
                             db_name=os.environ["DB_NAME"],
-                            db_pass=os.environ["DB_PASS"],
-                            schema_version=1,
-                            youtube=False)
+                            db_pass=os.environ["DB_PASS"])
 
     if 'DO_FULL_SYNC' in os.environ:
         config.do_full_sync = True
@@ -50,7 +51,19 @@ if __name__ == "__main__":
         config.developer_key = os.environ["YOUTUBE_DEVELOPER_KEY"]
         config.youtube = True
 
+    if 'TWITCH_CLIENT_ID' in os.environ and \
+            'TWITCH_CLIENT_SECRET' in os.environ and \
+            'TWITCH_WEBHOOK_ADDR' in os.environ:
+        config.client_id = os.environ["TWITCH_CLIENT_ID"]
+        config.client_secret = os.environ["TWITCH_CLIENT_SECRET"]
+        config.webhook_addr = os.environ["TWITCH_WEBHOOK_ADDR"]
+        config.twitch = True
+
     client = Disrapid(command_prefix=".", config=config)
+
+    logging.debug(
+        "loading extensions..."
+    )
 
     # load extensions
     client.load_extension("cogs.sync")
@@ -58,7 +71,16 @@ if __name__ == "__main__":
     client.load_extension("cogs.reactionrole")
 
     if config.youtube is True:
+        logging.debug(
+            "loading youtube extension..."
+        )
         client.load_extension("cogs.youtube")
+
+    if config.twitch is True:
+        logging.debug(
+            "loading twitch extension..."
+        )
+        client.load_extension("cogs.twitch")
 
     client.run(DISCORD_TOKEN)
 

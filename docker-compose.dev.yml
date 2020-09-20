@@ -16,7 +16,15 @@ services:
             - DB_PASS=${DB_PASS}
             - DEBUG=true
             - YOUTUBE_DEVELOPER_KEY=${YOUTUBE_DEVELOPER_KEY}
+            - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
+            - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
+            - TWITCH_WEBHOOK_ADDR=${TWITCH_WEBHOOK_ADDR}
             - DO_FULL_SYNC=true
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.whoami.rule=Host(`${TWITCH_WEBHOOK_ADDR}`)"
+            - "traefik.http.routers.whoami.entrypoints=webhook"
+            - "traefik.http.routers.whoami.tls.certresolver=myhttpchalleng"
         links:
             - database:database
         ports:
@@ -36,6 +44,29 @@ services:
         volumes:
             - db_vol:/var/lib/mysql
             - ./config/database:/etc/mysql/conf.d
-        
+
+    traefik:
+        image: "traefik:latest"
+        command:
+            - "--log.level=DEBUG"
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            - "--entrypoints.webhook.address=:7766"
+            - "--entrypoints.webhook.insecure=false"
+            - "--certificatesresolvers.myhttpchallenge.acme.httpchallenge=true"
+            - "--certificatesresolvers.myhttpchallenge.acme.httpchallenge.entrypoint=web"
+            #- "--certificatesresolvers.myhttpchallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+            - "--certificatesresolvers.myhttpchallenge.acme.storage=/letsencrypt/acme.json"
+        ports:
+            - "80:80"
+            - "443:443"
+            - "8080:8080"
+            - "7766:7766"
+        volumes:
+            - "./letsencrypt:/letsencrypt"
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
 volumes:
     db_vol:

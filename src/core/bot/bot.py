@@ -23,6 +23,9 @@ class Disrapid(commands.Bot):
             if self.config.youtube:
                 self.youtube = YouTubeHelper(self.config.developer_key)
 
+            if self.config.twitch:
+                pass
+
         except Exception as e:
             logging.fatal(e)
             sys.exit(1)
@@ -43,8 +46,9 @@ class DisrapidConfig:
         self.db_name = kwargs.pop("db_name")
         self.db_pass = kwargs.pop("db_pass")
         self.db_user = kwargs.pop("db_user")
-        self.schema_version = kwargs.pop("schema_version")
         self.do_full_sync = False
+        self.youtube = False
+        self.twitch = False
 
 
 class DisrapidLoggingFormatter(jsonlogger.JsonFormatter):

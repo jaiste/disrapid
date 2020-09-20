@@ -30,7 +30,7 @@ class Youtube(commands.Cog, name="Youtube"):
     def __init__(self, bot):
         self.bot = bot
         self.db = self.bot.db
-        self.notify_yt_goals.start()
+        # self.notify_yt_goals.start()
         self.notify_yt_act.start()
 
     # MAIN LOOP FUNCTIONS
