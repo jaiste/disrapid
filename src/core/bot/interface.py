@@ -2,7 +2,6 @@ from sqlalchemy import create_engine, exc
 from sqlalchemy.orm import sessionmaker
 import logging
 import sys
-
 from models import Base
 
 

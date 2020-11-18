@@ -32,9 +32,9 @@ class Twitch(commands.Cog, name="Twitch"):
         )
         # start twitch webhook
         hook = TwitchWebHook(
-            f"https://{self.bot.config.webhook_addr}:7766",
+            f"https://{self.bot.config.webhook_addr}:443",
             self.bot.config.client_id,
-            7766
+            80
         )
 
         hook.authenticate(twitch.get_app_token())
@@ -61,8 +61,6 @@ class Twitch(commands.Cog, name="Twitch"):
             self.callback_user_changed
         )
         logging.debug(f'was subscription successfull?: {success}')
-
-
         # success = hook.unsubscribe_user_changed(uuid_user)
         # logging.debug(f'was unsubscription successfull?: {success}')
         # success = hook.unsubscribe_stream_changed(uuid_stream)

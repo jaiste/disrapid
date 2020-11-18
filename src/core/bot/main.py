@@ -21,6 +21,7 @@ try:
 
     logging.config.fileConfig('config/log.conf')
     logger = logging.getLogger()
+    telemetry = logging.getLogger("telemetry")
 
     # if no discord token was provided we can't run the bot
     if 'DISCORD_TOKEN' not in os.environ:
@@ -35,9 +36,14 @@ except Exception as e:
 
 if __name__ == "__main__":
 
-    logging.debug(
+    telemetry.info(
+        "test1"
+    )
+    logging.warning(
         "configuration init..."
     )
+    telemetry.info("testlog handler", extra={'testfield1': 'testresult'})
+
     # start and run our discord client
     config = DisrapidConfig(db_host=os.environ["DB_HOST"],
                             db_user=os.environ["DB_USER"],
@@ -77,10 +83,11 @@ if __name__ == "__main__":
         client.load_extension("cogs.youtube")
 
     if config.twitch is True:
-        logging.debug(
-            "loading twitch extension..."
-        )
-        client.load_extension("cogs.twitch")
+        # logging.debug(
+        #     "loading twitch extension..."
+        # )
+        # client.load_extension("cogs.twitch")
+        pass
 
     client.run(DISCORD_TOKEN)
 
